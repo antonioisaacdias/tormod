@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hono/node-server": "^1.19.14",
     "better-sqlite3": "^11.10.0",
+    "hono": "^4.12.24",
     "shlex": "^2.1.2"
   },
   "devDependencies": {
