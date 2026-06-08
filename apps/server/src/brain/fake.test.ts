@@ -21,7 +21,7 @@ describe("FakeBrainAdapter", () => {
   it("a scripted tool_use invokes the permission handler and respects allow", async () => {
     const fake = new FakeBrainAdapter();
     const calls: string[] = [];
-    fake.onPermissionRequest(async (req) => {
+    fake.onPermissionRequest(async (_sessionId, req) => {
       calls.push(req.tool);
       return { allow: true };
     });
@@ -42,7 +42,7 @@ describe("FakeBrainAdapter", () => {
 
   it("denied permission yields a failed tool_result", async () => {
     const fake = new FakeBrainAdapter();
-    fake.onPermissionRequest(async () => ({ allow: false, message: "nope" }));
+    fake.onPermissionRequest(async (_sessionId) => ({ allow: false, message: "nope" }));
     const results: boolean[] = [];
     fake.onEvent((_s, e) => {
       if (e.type === "tool_result") results.push(e.ok);

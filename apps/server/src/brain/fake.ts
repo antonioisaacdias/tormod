@@ -49,7 +49,7 @@ export class FakeBrainAdapter implements BrainAdapter {
     for (const event of events) {
       if (event.type === "tool_use") {
         const resp = this.permissionHandler
-          ? await this.permissionHandler(event.request, event.id)
+          ? await this.permissionHandler(id, event.request, event.id)
           : { allow: false, message: "no handler" };
         this.emit(id, event);
         this.emit(id, {

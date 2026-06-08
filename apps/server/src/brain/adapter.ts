@@ -20,6 +20,7 @@ export interface PermissionResponse {
  * human pressing a button in the browser. Mirrors the Agent SDK `canUseTool`.
  */
 export type PermissionHandler = (
+  sessionId: string,
   request: ToolRequest,
   toolUseId: string,
 ) => Promise<PermissionResponse>;
