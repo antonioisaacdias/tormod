@@ -1,0 +1,25 @@
+# Config real do homelab — nunca versionar (vive em ~/.config/homelab/huginn/)
+inventory.yaml
+inventory.yml
+
+# Secrets / tokens (fase 2)
+*.token
+.env
+.env.*
+!.env.example
+
+# Banco de audit (append-only, mora no node)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Node / TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
