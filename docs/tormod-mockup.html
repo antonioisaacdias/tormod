@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tormod — Mockup</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#0F2236; --surface:#16293F; --raised:#1E3550; --border:#2A415C;
+  --deep:#0C1B2C;
+  --frost:#EEF3F8; --mist:#93A6BE; --faint:#5C708A;
+  --accent:#4DB6E8; --accent-deep:#2E91C4;
+  --safe:#46C08A; --approve:#E8A93C; --danger:#E5687C;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+.mono{font-family:'JetBrains Mono',monospace}
+body{
+  font-family:'Manrope',sans-serif;color:var(--frost);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;gap:18px;padding:26px 16px 70px;
+  background:
+    radial-gradient(900px 520px at 80% -8%, rgba(77,182,232,0.10), transparent 60%),
+    radial-gradient(760px 520px at 10% 108%, rgba(70,192,138,0.06), transparent 60%),
+    #081320;
+}
+
+/* toggle */
+.toggle{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:5px}
+.toggle button{font-family:inherit;font-size:13.5px;font-weight:700;color:var(--mist);background:none;border:none;padding:9px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.toggle button.on{background:var(--accent);color:var(--ink)}
+.cap{font-size:12.5px;color:var(--mist);text-align:center;max-width:600px;line-height:1.55}
+.cap b{color:var(--accent)} .cap .mono{color:var(--accent)}
+
+/* brand mark — hexágono (node/circuito) */
+.mark{display:flex;align-items:center;gap:10px}
+.mark svg{width:26px;height:26px}
+.wm{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.5px}
+
+/* ── chat content (compartilhado) ── */
+.day-sep{text-align:center;margin:2px 0 16px}
+.day-sep span{font-size:10.5px;color:var(--faint);background:var(--surface);padding:4px 12px;border-radius:999px}
+.msg{margin-bottom:14px;display:flex;flex-direction:column}
+.msg.user{align-items:flex-end}
+.bubble{max-width:82%;padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.5}
+.msg.user .bubble{background:var(--accent);color:var(--ink);border-bottom-right-radius:5px;font-weight:500}
+.ai-name{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;letter-spacing:.3px}
+.ai-name .hx{width:11px;height:11px}
+.ai-bubble{background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:5px}
+.hl{color:var(--frost)} .ok{color:var(--safe)}
+
+/* tool call (leitura = auto) */
+.tool{background:var(--deep);border:1px solid var(--border);border-radius:12px;padding:9px 12px 9px 13px;margin-bottom:14px;border-left:2px solid var(--safe);display:flex;align-items:center;gap:10px}
+.tool.run{border-left-color:var(--accent)}
+.tool .body{flex:1;min-width:0}
+.tool .t-name{color:var(--accent);font-size:11.5px;font-weight:600}
+.tool .t-cmd{font-size:12px;color:#c3cfdd;font-family:'JetBrains Mono',monospace;word-break:break-all;margin-top:2px}
+.tool .tier{font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--safe);background:rgba(70,192,138,.13);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.tool.run .tier{color:var(--accent);background:rgba(77,182,232,.13)}
+
+/* approval card (aprovação = âmbar) */
+.approval{background:linear-gradient(165deg,rgba(232,169,60,.13),rgba(232,169,60,.035));border:1px solid rgba(232,169,60,.36);border-radius:16px;padding:14px;margin-bottom:14px;transition:.3s}
+.approval.resolved{border-color:var(--border);background:var(--surface)}
+.ap-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:5px;color:var(--approve)}
+.ap-head.done{color:var(--mist)}
+.ap-head .hx{width:14px;height:14px}
+.ap-sub{font-size:11px;color:var(--mist);margin-bottom:11px}
+.ap-sub b{color:var(--approve);font-weight:700}
+.ap-cmd{font-size:12.5px;font-family:'JetBrains Mono',monospace;background:var(--ink);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:#d6dae6;margin-bottom:13px;word-break:break-all}
+.ap-cmd .nd{color:var(--approve)}
+.ap-actions{display:flex;gap:9px}
+.ap-deny,.ap-allow{display:flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;padding:11px;border-radius:11px;font-size:13.5px;font-weight:700;font-family:inherit;transition:transform .12s}
+.ap-deny:active,.ap-allow:active{transform:scale(.96)}
+.ap-deny{flex:1;background:var(--raised);color:var(--danger);border:1px solid rgba(229,104,124,.3)}
+.ap-allow{flex:1.5;background:var(--safe);color:#04261b}
+.ap-result{display:none;align-items:center;gap:7px;font-size:12.5px;font-weight:600;margin-top:2px}
+.post{display:none}
+
+/* composer */
+.composer-in{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:7px 7px 7px 14px}
+.composer-in input{flex:1;background:none;border:none;outline:none;color:var(--frost);font-size:14px;font-family:inherit}
+.composer-in input::placeholder{color:var(--faint)}
+.perm{font-size:10.5px;color:var(--safe);background:rgba(70,192,138,.13);border:1px solid rgba(70,192,138,.25);padding:4px 8px;border-radius:7px;white-space:nowrap}
+.send{width:38px;height:38px;border-radius:11px;border:none;cursor:pointer;flex:none;background:var(--accent);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+
+/* dots */
+.dot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.7);opacity:.55}}
+.pulse{animation:pulse 1.8s ease-in-out infinite}
+
+/* ════ MOBILE ════ */
+.device-mobile{width:384px;max-width:100%;border-radius:44px;padding:11px;background:linear-gradient(160deg,#24364a,#0c1622);box-shadow:0 0 0 1px rgba(255,255,255,.06),0 40px 90px -30px rgba(0,0,0,.9)}
+.m-screen{height:788px;border-radius:34px;overflow:hidden;background:var(--ink);display:flex;flex-direction:column;position:relative}
+.m-status{height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:700}
+.m-status .wg{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--safe)}
+.m-app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.m-bar{flex:none;padding:6px 20px 14px;display:flex;align-items:center;justify-content:space-between}
+.m-bar .wm{font-size:25px}
+.m-bar .sub{font-size:11.5px;color:var(--mist)}
+.m-bar .sub .mono{color:var(--accent)}
+.conn{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mist);background:var(--surface);border:1px solid var(--border);padding:7px 11px;border-radius:999px}
+.conn .mono{color:var(--frost)}
+.m-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 16px}
+.m-scroll::-webkit-scrollbar{width:0}
+.sec-row{display:flex;justify-content:space-between;align-items:baseline;margin:4px 4px 12px;font-size:14px;font-weight:700}
+.sec-row .ct{font-size:11px;color:var(--mist);font-weight:500}
+
+.card{width:100%;text-align:left;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:14px 15px;margin-bottom:11px;display:block;color:var(--frost);transition:.15s}
+.card:active{transform:scale(.985);border-color:var(--accent)}
+.card-head{display:flex;align-items:center;gap:9px}
+.card-title{font-weight:700;font-size:14.5px;flex:1}
+.card-time{font-size:11px;color:var(--faint)}
+.card-snip{font-size:13px;color:var(--mist);margin:7px 0 10px;line-height:1.4}
+.card-meta{display:flex;align-items:center;justify-content:space-between}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);background:rgba(77,182,232,.1);padding:4px 9px;border-radius:8px}
+.st-t{font-size:11.5px;font-weight:600}
+
+.fab{position:absolute;right:18px;bottom:20px;width:56px;height:56px;border-radius:19px;border:none;cursor:pointer;background:var(--accent);color:var(--ink);font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -8px rgba(77,182,232,.55)}
+
+.m-chat{position:absolute;inset:0;background:var(--ink);display:none;flex-direction:column}
+.m-chat.show{display:flex}
+.m-chat-bar{flex:none;display:flex;align-items:center;gap:6px;padding:4px 12px 12px;border-bottom:1px solid var(--border)}
+.iconbtn{background:none;border:none;color:var(--frost);font-size:22px;padding:6px 10px;cursor:pointer;border-radius:9px}
+.m-chat-title{flex:1;min-width:0}
+.m-ct-main{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-ct-sub{font-size:10px;color:var(--faint);font-family:'JetBrains Mono',monospace}
+.m-composer{flex:none;padding:10px 14px 14px;border-top:1px solid var(--border)}
+
+/* ════ DESKTOP ════ */
+.device-desktop{width:1180px;max-width:100%;height:740px;border-radius:16px;overflow:hidden;background:var(--ink);border:1px solid rgba(255,255,255,.08);box-shadow:0 50px 110px -34px rgba(0,0,0,.9);display:flex;flex-direction:column}
+.d-titlebar{height:44px;flex:none;display:flex;align-items:center;gap:14px;padding:0 16px;background:var(--deep);border-bottom:1px solid var(--border)}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%}
+.urlbar{flex:1;max-width:460px;margin:0 auto;display:flex;align-items:center;gap:8px;justify-content:center;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:7px 14px;font-size:12px;color:var(--mist)}
+.urlbar .mono{color:var(--frost)}.urlbar .lk{color:var(--safe);font-size:11px}
+.d-app{flex:1;min-height:0;display:grid;grid-template-columns:288px 1fr 300px}
+
+.d-side{background:var(--deep);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 14px 14px;min-height:0}
+.d-side .head{padding:0 6px;margin-bottom:14px}
+.d-side .wm{font-size:24px}
+.d-side .sub{font-size:11.5px;color:var(--mist)}.d-side .sub .mono{color:var(--accent)}
+.d-side .conn{margin-bottom:18px}
+.s-lbl{font-size:11px;font-weight:700;color:var(--mist);text-transform:uppercase;letter-spacing:.5px;padding:0 6px;margin-bottom:10px;display:flex;justify-content:space-between}
+.s-lbl .ct{color:var(--faint);font-weight:500}
+.d-sess{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.d-sess::-webkit-scrollbar{width:6px}.d-sess::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px}
+.sess{display:flex;align-items:flex-start;gap:10px;text-align:left;cursor:pointer;background:none;border:1px solid transparent;border-radius:11px;padding:10px;color:var(--frost)}
+.sess:hover{background:var(--surface)}
+.sess.on{background:rgba(77,182,232,.12);border-color:rgba(77,182,232,.32)}
+.sess .dot{margin-top:4px}
+.sess-body{min-width:0;flex:1}
+.sess-title{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sess-meta{font-size:11px;color:var(--faint);display:flex;gap:6px;margin-top:3px;align-items:center}.sess-meta .mono{color:var(--accent)}
+.sess-st{margin-left:auto;font-size:10.5px;font-weight:600}
+.newbtn{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;padding:12px;border-radius:13px;font-family:inherit;font-size:14px;font-weight:700;background:var(--accent);color:var(--ink)}
+
+.d-main{display:flex;flex-direction:column;min-height:0;background:var(--ink)}
+.d-chat-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:15px 26px;border-bottom:1px solid var(--border)}
+.dch-title{font-weight:700;font-size:16px}
+.dch-sub{font-size:11px;color:var(--faint);font-family:'JetBrains Mono',monospace;margin-top:3px}
+.brain{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--accent);background:rgba(77,182,232,.12);border:1px solid rgba(77,182,232,.25);padding:6px 11px;border-radius:8px;font-weight:600}
+.brain .hx{width:12px;height:12px}
+.d-thread{flex:1;min-height:0;overflow-y:auto;padding:22px 26px}
+.d-thread::-webkit-scrollbar{width:8px}.d-thread::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px}
+.d-thread .msg,.d-thread .tool,.d-thread .approval{max-width:660px}
+.d-composer{flex:none;padding:14px 26px 18px;border-top:1px solid var(--border)}
+
+.d-rail{background:var(--deep);border-left:1px solid var(--border);padding:20px 16px;overflow-y:auto}
+.d-rail::-webkit-scrollbar{width:6px}.d-rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px}
+.r-lbl{font-size:11px;font-weight:700;color:var(--mist);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.r-lbl .mono{color:var(--accent);text-transform:none;letter-spacing:0}
+.r-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:20px;display:flex;flex-direction:column;gap:11px}
+.rc-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--mist)}
+.rc-row .v{color:var(--frost);font-size:12px}.rc-row .v.mono{font-size:11.5px}
+.bar{height:6px;border-radius:99px;background:var(--raised);overflow:hidden}.bar i{display:block;height:100%;border-radius:99px}
+.legend{display:flex;flex-direction:column;gap:10px}
+.lg{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mist)}
+.lg b{color:var(--frost);font-weight:600}
+
+.hide{display:none}
+@media(max-width:1220px){.device-desktop{transform:scale(.82);transform-origin:top center;margin-bottom:-130px}}
+@media(max-width:680px){.device-desktop{transform:scale(.40);margin-bottom:-430px}.cap.d-cap{display:none}}
+</style>
+</head>
+<body>
+
+<div class="toggle">
+  <button id="t-mobile" class="on" onclick="setView('mobile')">📱 Mobile</button>
+  <button id="t-desktop" onclick="setView('desktop')">🖥 Desktop</button>
+</div>
+
+<!-- ═══════════ MOBILE ═══════════ -->
+<div class="device-mobile" id="dev-mobile">
+  <div class="m-screen">
+    <div class="m-status"><span>21:47</span><span class="wg">● wg0 · 12ms</span></div>
+    <div class="m-app">
+
+      <!-- list -->
+      <div class="m-list" id="m-list">
+        <div class="m-bar">
+          <div class="mark" id="mark-m"></div>
+          <div class="conn"><span class="dot pulse" style="background:var(--safe);box-shadow:0 0 8px var(--safe)"></span><span class="mono">Claude Code</span></div>
+        </div>
+        <div class="m-scroll">
+          <div class="sec-row"><span>Sessões</span><span class="ct">4 · 2 vivas</span></div>
+          <div id="m-sessions"></div>
+          <div style="height:90px"></div>
+        </div>
+        <button class="fab" onclick="openChat()">+</button>
+      </div>
+
+      <!-- chat -->
+      <div class="m-chat" id="m-chat">
+        <div class="m-chat-bar">
+          <button class="iconbtn" onclick="closeChat()">‹</button>
+          <div class="m-chat-title">
+            <div class="m-ct-main">Restart Forgejo no truenas</div>
+            <div class="m-ct-sub">9f3a · truenas · cérebro: Claude Code</div>
+          </div>
+          <button class="iconbtn">⋮</button>
+        </div>
+        <div class="m-scroll thread" style="padding-top:16px"></div>
+        <div class="m-composer">
+          <div class="composer-in">
+            <input placeholder="Responder ao Claude Code…">
+            <span class="perm">leitura: auto</span>
+            <button class="send">↑</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ DESKTOP ═══════════ -->
+<div class="device-desktop hide" id="dev-desktop">
+  <div class="d-titlebar">
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="urlbar">🔒 <span class="mono">tormod.diaslabs.com.br</span> <span class="lk">· via wg0</span></div>
+    <div style="width:52px"></div>
+  </div>
+  <div class="d-app">
+    <!-- sidebar -->
+    <aside class="d-side">
+      <div class="head">
+        <div class="mark" id="mark-d"></div>
+      </div>
+      <div class="conn"><span class="dot pulse" style="background:var(--safe);box-shadow:0 0 8px var(--safe)"></span><span>Claude Code conectado · <span class="mono">12ms</span></span></div>
+      <div class="s-lbl"><span>Sessões</span><span class="ct">4 · 2 vivas</span></div>
+      <div class="d-sess" id="d-sessions"></div>
+      <button class="newbtn">+ Nova sessão</button>
+    </aside>
+    <!-- main -->
+    <main class="d-main">
+      <div class="d-chat-head">
+        <div>
+          <div class="dch-title">Restart Forgejo no truenas</div>
+          <div class="dch-sub">9f3a-c12e · truenas · ~/infra</div>
+        </div>
+        <span class="brain"><svg class="hx" viewBox="0 0 24 24" fill="none" stroke="#4DB6E8" stroke-width="1.6"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z"/></svg> cérebro: Claude Code</span>
+      </div>
+      <div class="d-thread thread"></div>
+      <div class="d-composer">
+        <div class="composer-in">
+          <input placeholder="Responder ao Claude Code na sessão truenas…">
+          <span class="perm">leitura: auto</span>
+          <button class="send">↑</button>
+        </div>
+      </div>
+    </main>
+    <!-- rail -->
+    <aside class="d-rail">
+      <div class="r-lbl">Detalhes da sessão</div>
+      <div class="r-card">
+        <div class="rc-row"><span>Status</span><span class="v" style="color:var(--approve)">aguardando você</span></div>
+        <div class="rc-row"><span>Node</span><span class="v mono">truenas</span></div>
+        <div class="rc-row"><span>Diretório</span><span class="v mono">~/infra</span></div>
+        <div class="rc-row"><span>Cérebro</span><span class="v">Claude Code · opus</span></div>
+        <div class="rc-row" style="flex-direction:column;align-items:stretch;gap:7px"><span>Contexto</span><div class="bar"><i style="width:41%;background:var(--accent)"></i></div><span style="font-size:11.5px;color:var(--faint)">~41% de 200k tokens</span></div>
+      </div>
+      <div class="r-lbl">Saúde do <span class="mono">truenas</span></div>
+      <div class="r-card">
+        <div class="rc-row" style="flex-direction:column;align-items:stretch;gap:7px"><span>CPU</span><div class="bar"><i style="width:38%;background:var(--safe)"></i></div></div>
+        <div class="rc-row" style="flex-direction:column;align-items:stretch;gap:7px"><span>Memória</span><div class="bar"><i style="width:72%;background:var(--approve)"></i></div></div>
+        <div class="rc-row"><span>SSH</span><span class="v" style="color:var(--safe)">● ativo via LAN</span></div>
+      </div>
+      <div class="r-lbl">Tiers de permissão</div>
+      <div class="r-card legend">
+        <div class="lg"><span class="dot" style="background:var(--safe)"></span><span><b>leitura</b> — roda livre</span></div>
+        <div class="lg"><span class="dot" style="background:var(--approve)"></span><span><b>altera estado</b> — pede aprovação</span></div>
+        <div class="lg"><span class="dot" style="background:var(--danger)"></span><span><b>destrutivo</b> — gated / fora do v1</span></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="cap d-cap">Mesma base de código — o toggle simula o breakpoint do PWA. O cérebro é o <b>Claude Code</b>; as tools de <span class="mono">leitura</span> rodam sozinhas (verde) e o que altera estado abre o <b>card de aprovação</b> (âmbar) com o comando literal. Toque em <b>Permitir</b>.</div>
+
+<script>
+const HEX = (c,sz)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="${c}" stroke-width="1.5"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z"/><circle cx="12" cy="12" r="2.6" fill="${c}" stroke="none"/></svg>`;
+const markHTML = `${HEX('#4DB6E8',26)}<div><div class="wm">Tormod</div><div class="sub">o cérebro do <span class="mono">odin</span> · remoto</div></div>`;
+document.getElementById('mark-m').innerHTML = markHTML;
+document.getElementById('mark-d').innerHTML = markHTML;
+
+const SESS=[
+  ['Restart Forgejo no truenas','truenas','agora','Claude quer reiniciar o serviço — aprovação pendente.','approve','aguardando',1],
+  ['Diagnóstico UFW FORWARD','diaslabs','2 min','Lendo before.rules via journalctl…','accent','trabalhando',1],
+  ['Deploy Open WebUI','debian','1 h','Container no ar na porta 3000.','faint','ocioso',0],
+  ['Sync .claude via Forgejo','odin','ontem','Sessão fechada — retomável.','faint','fechada',0],
+];
+const STC={approve:'var(--approve)',accent:'var(--accent)',safe:'var(--safe)',faint:'var(--faint)'};
+
+document.getElementById('m-sessions').innerHTML=SESS.map(([t,nd,tm,sn,col,st,w],i)=>{
+  const c=STC[col];
+  return `<button class="card" ${i===0?'onclick="openChat()"':''}>
+    <div class="card-head"><span class="dot ${w?'pulse':''}" style="background:${c};box-shadow:0 0 8px ${c}"></span>
+    <span class="card-title">${t}</span><span class="card-time">${tm}</span></div>
+    <div class="card-snip">${sn}</div>
+    <div class="card-meta"><span class="chip">▸ ${nd}</span><span class="st-t" style="color:${c}">${st}</span></div></button>`;
+}).join('');
+
+document.getElementById('d-sessions').innerHTML=SESS.map(([t,nd,tm,sn,col,st,w],i)=>{
+  const c=STC[col];
+  return `<button class="sess ${i===0?'on':''}" onclick="selSess(this)">
+    <span class="dot ${w?'pulse':''}" style="background:${c};box-shadow:0 0 8px ${c}"></span>
+    <div class="sess-body"><div class="sess-title">${t}</div>
+    <div class="sess-meta"><span class="mono">${nd}</span><span>·</span><span>${tm}</span><span class="sess-st" style="color:${c}">${st}</span></div></div></button>`;
+}).join('');
+function selSess(el){document.querySelectorAll('.sess').forEach(s=>s.classList.remove('on'));el.classList.add('on');}
+
+const THREAD=`
+  <div class="day-sep"><span>sessão iniciada às 21:42 · cérebro: Claude Code</span></div>
+  <div class="msg user"><div class="bubble">A Forgejo do truenas caiu de novo. Investiga e reinicia se precisar.</div></div>
+  <div class="msg"><div class="ai-name">${HEX('#4DB6E8',11)} claude code</div><div class="bubble ai-bubble">Cheguei no <span class="hl mono">truenas</span>. O serviço <span class="hl mono">forgejo</span> está em <span class="hl mono">failed</span>.</div></div>
+  <div class="tool"><div class="body"><div class="t-name">Bash</div><div class="t-cmd">systemctl is-active forgejo → failed</div></div><span class="tier">leitura · auto</span></div>
+  <div class="tool"><div class="body"><div class="t-name">Bash</div><div class="t-cmd">journalctl -u forgejo -n 40 --no-pager</div></div><span class="tier">leitura · auto</span></div>
+  <div class="msg"><div class="ai-name">${HEX('#4DB6E8',11)} claude code</div><div class="bubble ai-bubble">O log confirma erro de conexão com o Postgres. Vou reiniciar o serviço — isso altera estado, então precisa da sua aprovação.</div></div>
+
+  <div class="approval">
+    <div class="ap-head">${HEX('#E8A93C',14)} Claude quer executar uma ação</div>
+    <div class="ap-sub">tool <span class="mono" style="color:var(--frost)">Bash</span> · tier <b>aprovação</b></div>
+    <div class="ap-cmd"><span class="nd">truenas</span>&nbsp; systemctl restart forgejo</div>
+    <div class="ap-actions">
+      <button class="ap-deny" onclick="decide(this,0)">✕ Negar</button>
+      <button class="ap-allow" onclick="decide(this,1)">✓ Permitir</button>
+    </div>
+    <div class="ap-result"></div>
+  </div>
+
+  <div class="post">
+    <div class="tool run"><div class="body"><div class="t-name">Bash</div><div class="t-cmd">systemctl restart forgejo && systemctl is-active forgejo</div></div><span class="tier">executado</span></div>
+    <div class="msg"><div class="ai-name">${HEX('#4DB6E8',11)} claude code</div><div class="bubble ai-bubble">Pronto — <span class="hl ok mono">active</span>. A Forgejo voltou e responde em <span class="hl mono">git.diaslabs.com.br</span>. Quer que eu crie um healthcheck pra reiniciar sozinho se cair?</div></div>
+  </div>
+`;
+document.querySelectorAll('.thread').forEach(t=>t.innerHTML=THREAD);
+
+function decide(btn,ok){
+  const ap=btn.closest('.approval'), thread=btn.closest('.thread');
+  ap.classList.add('resolved');
+  const head=ap.querySelector('.ap-head'); head.classList.add('done'); head.innerHTML='⬡ Decisão registrada';
+  ap.querySelector('.ap-actions').style.display='none';
+  const res=ap.querySelector('.ap-result'); res.style.display='flex';
+  if(ok){res.style.color='var(--safe)';res.textContent='✓ Permitido — retomando a sessão…';thread.querySelector('.post').style.display='block';}
+  else{res.style.color='var(--danger)';res.textContent='✕ Negado — Claude Code vai propor outra abordagem.';}
+  thread.scrollTop=thread.scrollHeight;
+}
+
+function setView(v){
+  document.getElementById('dev-mobile').classList.toggle('hide',v!=='mobile');
+  document.getElementById('dev-desktop').classList.toggle('hide',v!=='desktop');
+  document.getElementById('t-mobile').classList.toggle('on',v==='mobile');
+  document.getElementById('t-desktop').classList.toggle('on',v==='desktop');
+}
+function openChat(){document.getElementById('m-list').style.display='none';document.getElementById('m-chat').classList.add('show');}
+function closeChat(){document.getElementById('m-chat').classList.remove('show');document.getElementById('m-list').style.display='flex';}
+</script>
+</body>
+</html>
