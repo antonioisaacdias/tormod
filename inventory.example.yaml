@@ -1,0 +1,34 @@
+# Huginn — inventário + allowlist (EXEMPLO)
+#
+# Copie para ~/.config/homelab/huginn/inventory.yaml e ajuste para o seu fleet.
+# O arquivo real NÃO é versionado (ver .gitignore).
+#
+# Rede fica fora daqui: host, porta, user e chave vêm do ~/.ssh/config.
+# O inventário só mapeia node -> alias SSH + define a allowlist de leitura.
+
+nodes:
+  control:                              # onde o Huginn roda; alcança a si mesmo
+    transport: local
+  nas:
+    transport: ssh
+    ssh_alias: nas                      # precisa existir como Host no ~/.ssh/config
+  vps:
+    transport: ssh
+    ssh_alias: vps
+  gpu-box:
+    transport: ssh
+    ssh_alias: gpu-box
+
+# run_safe_command só executa se o comando casar EXATAMENTE com um padrão daqui.
+# Tudo comprovadamente read-only. Curinga `*` cobre argumentos.
+allowlist:
+  - df
+  - free
+  - uptime
+  - ss
+  - "systemctl status *"
+  - "journalctl -u * --no-pager"
+  - "docker ps"
+  - "docker logs *"
+  - "wg show"
+  - "ufw status"
