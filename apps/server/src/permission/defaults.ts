@@ -18,8 +18,8 @@ export const OUTBOUND_TOOLS: ReadonlySet<string> = new Set([
  */
 export const SAFE_BASH: ReadonlySet<string> = new Set([
   "ls", "cat", "head", "tail", "pwd", "whoami", "id", "date", "uptime",
-  "df", "free", "uname", "hostname", "ss", "ip", "ping", "dig", "host",
-  "ps", "top", "env", "echo", "which", "stat", "wc", "grep", "find",
+  "df", "free", "uname", "hostname", "ss",
+  "ps", "top", "echo", "which", "stat", "wc", "grep",
   "docker ps", "docker logs", "docker images", "docker inspect",
   "systemctl status", "systemctl is-active", "systemctl is-enabled",
   "systemctl list-units", "journalctl",
@@ -33,6 +33,7 @@ export const SAFE_BASH: ReadonlySet<string> = new Set([
 export const DESTRUCTIVE_BINS: ReadonlySet<string> = new Set([
   "sudo", "su", "dd", "mkfs", "fdisk", "parted", "shutdown", "reboot",
   "halt", "poweroff", "init",
+  "rm", "rmdir", "shred", "truncate",
 ]);
 
 /** Substrings that, if present anywhere in a Bash command, force deny. */
