@@ -17,10 +17,12 @@ interface ChatViewProps {
   session: Session
   items: ThreadItem[]
   usage: SessionUsage
+  draft: string
+  onDraftChange: (value: string) => void
   onBack: () => void
 }
 
-export function ChatView({ session, items, usage, onBack }: ChatViewProps) {
+export function ChatView({ session, items, usage, draft, onDraftChange, onBack }: ChatViewProps) {
   const { decisions, decide } = useThreadDecisions()
   const status = statusPresentation(session.status)
 
@@ -51,7 +53,11 @@ export function ChatView({ session, items, usage, onBack }: ChatViewProps) {
 
       <div className="shrink-0 border-t border-border px-4 pb-3.5 pt-3 lg:px-6">
         <StatusLine usage={usage} />
-        <Composer placeholder={`Responder ao Claude Code na sessão ${session.node}…`} />
+        <Composer
+          value={draft}
+          onChange={onDraftChange}
+          placeholder={`Responder ao Claude Code na sessão ${session.node}…`}
+        />
       </div>
     </div>
   )

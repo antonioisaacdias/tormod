@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useRef } from 'react'
 
-export function useAutoResizeTextarea(maxHeight: number) {
+export function useAutoResizeTextarea(maxHeight: number, value: string) {
   const ref = useRef<HTMLTextAreaElement>(null)
 
   const resize = useCallback(() => {
@@ -14,7 +14,7 @@ export function useAutoResizeTextarea(maxHeight: number) {
 
   useLayoutEffect(() => {
     resize()
-  }, [resize])
+  }, [resize, value])
 
-  return { ref, resize }
+  return { ref }
 }

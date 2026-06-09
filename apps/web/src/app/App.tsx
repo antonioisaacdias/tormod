@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Brand } from '@/components/Brand'
-import { ConnectionBadge } from '@/components/ConnectionBadge'
 import { SessionList } from '@/components/sessions/SessionList'
 import { ChatView } from '@/components/chat/ChatView'
+import { usePersistentState } from '@/hooks/usePersistentState'
 import { cn } from '@/lib/cn'
 import { sessions } from '@/fixtures/sessions'
 import { thread } from '@/fixtures/thread'
@@ -11,11 +11,16 @@ import { sessionUsage } from '@/fixtures/usage'
 export function App() {
   const [activeId, setActiveId] = useState(sessions[0].id)
   const [mobileChat, setMobileChat] = useState(false)
+  const [drafts, setDrafts] = usePersistentState<Record<string, string>>('tormod:drafts', {})
   const active = sessions.find((session) => session.id === activeId) ?? sessions[0]
 
   function openSession(id: string) {
     setActiveId(id)
     setMobileChat(true)
+  }
+
+  function changeDraft(value: string) {
+    setDrafts((current) => ({ ...current, [active.id]: value }))
   }
 
   return (
@@ -27,12 +32,18 @@ export function App() {
         )}
       >
         <Brand />
-        <ConnectionBadge />
-        <SessionList sessions={sessions} activeId={activeId} onSelect={openSession} />
+        <SessionList sessions={sessions} activeId={activeId} drafts={drafts} onSelect={openSession} />
       </aside>
 
       <main className={cn('min-h-0 flex-1', mobileChat ? 'flex' : 'hidden lg:flex')}>
-        <ChatView session={active} items={thread} usage={sessionUsage} onBack={() => setMobileChat(false)} />
+        <ChatView
+          session={active}
+          items={thread}
+          usage={sessionUsage}
+          draft={drafts[active.id] ?? ''}
+          onDraftChange={changeDraft}
+          onBack={() => setMobileChat(false)}
+        />
       </main>
     </div>
   )
