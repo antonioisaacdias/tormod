@@ -1,8 +1,4 @@
-# Config real do homelab — nunca versionar (vive em ~/.config/homelab/huginn/)
-inventory.yaml
-inventory.yml
-
-# Secrets / tokens (fase 2)
+# Secrets / tokens — never commit
 *.token
 .env
 .env.*
