@@ -346,13 +346,15 @@ Portão de CI: a **Permission Policy não mergeia** sem cobertura dos casos de a
 ## 15. Branding / naming
 
 - **Nome:** Tormod. Tema **nórdico** mantido (família `odin`/`saga`).
-- **Em aberto (revisar na implementação de UI):** a paleta "Corvo & Circuito" (a metáfora do corvo era do Huginn) e o nome do futuro microsserviço de memória (era "Muninn", o corvo-par). Os tokens de cor/tier em si (safe/approve/danger) seguem válidos; só o *nome* do tema e do microsserviço estão soltos.
+- **Mark:** cérebro + Mjölnir + raio, minimalista, sobre navy (refino do desenho fica pra fase de UI).
+- **Paleta "Sinapse & Trovão"** *(resolvido 2026-06-08, ex-"Corvo & Circuito")* — funde a mente (sinapse) e a força de Thor (trovão). Os tokens de tier (safe/approve/danger) seguem válidos; o acento de marca é `arc` (azul-relâmpago, ex-`huginn`).
+- **Mimir** *(resolvido 2026-06-08, ex-"Muninn")* — nome do futuro microsserviço de memória/histórico/métricas. Mímir é o ser da sabedoria que Odin consulta por conselho.
 
 ---
 
 ## 16. Pendências / follow-ups
 
-1. **Reconciliar/aposentar o `PRODUCT.md` antigo** — está na concepção Huginn/Go/ops-MCP, superseded por esta spec.
-2. **Renomear repo/dir/memória** Huginn→Tormod — operação à parte; o rename do repo no GitHub é outward-facing (afeta a URL pública de portfólio) e precisa de OK explícito.
-3. **Decidir nome do tema/paleta e do microsserviço de memória** (§15).
-4. **Esqueleto antigo em `~/huginn`** (go.mod, inventory.example.yaml, etc.) está obsoleto — limpar ao recomeçar a estrutura TS.
+1. ~~Reconciliar/aposentar o `PRODUCT.md` antigo~~ — **resolvido 2026-06-08**: `PRODUCT.md` reescrito como visão + roadmap (norte de longo prazo); `README.md` reescrito em inglês alinhado ao Tormod.
+2. ~~Renomear repo/dir/memória Huginn→Tormod~~ — **resolvido 2026-06-08**: GitHub renomeado pra `antonioisaacdias/tormod` (com redirect), dir local `~/tormod`, remote e memória atualizados.
+3. ~~Decidir nome do tema/paleta e do microsserviço de memória~~ — **resolvido 2026-06-08** (§15): paleta "Sinapse & Trovão", microsserviço "Mimir".
+4. ~~Esqueleto antigo em `~/huginn`~~ — **resolvido 2026-06-08**: removidos `go.mod`, `inventory.example.yaml`, `docs/mark.svg`, `docs/mockup.html`, `docs/palette.html` (artefatos Huginn/Go). `.gitignore` limpo. Resta o **rename repo/dir** (#2).
