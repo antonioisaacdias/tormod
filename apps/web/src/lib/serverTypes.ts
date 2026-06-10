@@ -40,3 +40,10 @@ export type HistoryItem =
   | { role: 'user'; text: string }
   | { role: 'brain'; text: string }
   | { role: 'tool'; tool: string; input: Record<string, unknown> }
+
+export interface Settings {
+  maxLiveSessions: number
+  idleCloseHours: number
+  defaultModel: 'auto' | 'opus' | 'sonnet' | 'haiku'
+  defaultEffort: 'auto' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+}

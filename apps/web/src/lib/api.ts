@@ -1,4 +1,4 @@
-import type { GlobalEvent, HistoryItem, ServerEvent, SessionMeta } from './serverTypes'
+import type { GlobalEvent, HistoryItem, ServerEvent, SessionMeta, Settings } from './serverTypes'
 
 const TOKEN_KEY = 'tormod:token'
 
@@ -60,6 +60,18 @@ export async function closeSession(id: string): Promise<void> {
 
 export async function deleteSession(id: string): Promise<void> {
   await expectOk(await fetch(`/api/sessions/${id}`, { method: 'DELETE', headers: authHeaders() }))
+}
+
+export async function getSettings(): Promise<Settings> {
+  const res = await expectOk(await fetch('/api/settings', { headers: authHeaders() }))
+  return res.json() as Promise<Settings>
+}
+
+export async function saveSettings(patch: Partial<Settings>): Promise<Settings> {
+  const res = await expectOk(
+    await fetch('/api/settings', { method: 'PUT', headers: authHeaders(), body: JSON.stringify(patch) }),
+  )
+  return res.json() as Promise<Settings>
 }
 
 export async function decide(toolUseId: string, allow: boolean): Promise<void> {
