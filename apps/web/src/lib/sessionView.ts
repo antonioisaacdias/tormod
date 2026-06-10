@@ -1,11 +1,11 @@
 import type { Session, SessionStatus } from '@/types/session'
 import type { SessionFilter, SessionSort, SessionView } from '@/types/sessionView'
 
-export const DEFAULT_SESSION_VIEW: SessionView = { sort: 'recent', filter: 'all' }
+export const DEFAULT_SESSION_VIEW: SessionView = { sort: 'status', filter: 'all' }
 
 const statusOrder: Record<SessionStatus, number> = {
-  waiting: 0,
-  working: 1,
+  working: 0,
+  waiting: 1,
   idle: 2,
   closed: 3,
 }
