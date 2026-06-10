@@ -99,10 +99,11 @@ export class ClaudeCodeAdapter implements BrainAdapter {
   }
 
   async resumeSession(id: string): Promise<void> {
+    // With a known Claude id, resume the transcript; without one (the session
+    // never had a turn), spawn a fresh brain under the same id instead of failing.
     const claudeId = this.claudeIds.get(id);
-    if (!claudeId) throw new Error(`cannot resume session without a Claude id: ${id}`);
-    const session = this.spawn(id, { resume: claudeId });
-    session.claudeId = claudeId;
+    const session = this.spawn(id, claudeId ? { resume: claudeId } : {});
+    session.claudeId = claudeId ?? null;
     this.sessions.set(id, session);
     void this.runConsumeLoop(session);
   }

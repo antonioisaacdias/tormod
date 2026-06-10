@@ -395,7 +395,7 @@ describe("ClaudeCodeAdapter", () => {
     expect((captured as { effort?: string }).effort).toBe("high");
   });
 
-  it("resume requires a captured Claude id, then reconnects under the same public id", async () => {
+  it("reconnects under the same public id, and spawns fresh when no Claude id is known", async () => {
     const adapter = new ClaudeCodeAdapter({
       queryFn: fakeQuery("claude-xyz", [
         [{ kind: "text", text: "primeiro" }, { kind: "result", ok: true }],
@@ -419,7 +419,7 @@ describe("ClaudeCodeAdapter", () => {
 
     expect(texts).toEqual(["primeiro", "retomado"]);
 
-    // A public id we never saw an init for cannot be resumed.
-    await expect(adapter.resumeSession("never-seen")).rejects.toThrow(/cannot resume/);
+    // An id with no captured Claude id spawns a fresh brain instead of failing.
+    await expect(adapter.resumeSession("never-seen")).resolves.toBeUndefined();
   });
 });
