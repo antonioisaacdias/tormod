@@ -25,6 +25,47 @@ describe("SessionManager — lifecycle", () => {
     await mgr.close(s.id);
     expect(mgr.list().find((x) => x.id === s.id)!.status).toBe("closed");
   });
+
+  it("sending to a closed session resumes it (back to live)", async () => {
+    const { mgr } = setup();
+    const s = await mgr.createSession({});
+    await mgr.close(s.id);
+    await mgr.send(s.id, "continua aí");
+    expect(mgr.list().find((x) => x.id === s.id)!.status).toBe("live");
+  });
+
+  it("sending to an unknown session does not throw", async () => {
+    const { mgr } = setup();
+    await expect(mgr.send("ghost", "x")).resolves.toBeUndefined();
+  });
+
+  it("broadcasts session_status working then idle across a turn", async () => {
+    const { fake, mgr } = setup();
+    const s = await mgr.createSession({});
+    const statuses: string[] = [];
+    mgr.subscribeAll((e) => {
+      if (e.type === "session_status" && e.id === s.id) statuses.push(e.status);
+    });
+    fake.script([{ type: "text", text: "oi" }, { type: "result", ok: true }]);
+    await mgr.send(s.id, "hi");
+    expect(statuses).toContain("working");
+    expect(statuses[statuses.length - 1]).toBe("idle");
+  });
+
+  it("broadcasts session_status waiting on a pending approval", async () => {
+    const { fake, mgr } = setup();
+    const s = await mgr.createSession({});
+    const statuses: string[] = [];
+    mgr.subscribeAll((e) => {
+      if (e.type === "session_status" && e.id === s.id) statuses.push(e.status);
+    });
+    fake.script([{ type: "tool_use", id: "t1", request: { tool: "Edit", input: { file_path: "/x" } } }]);
+    const sending = mgr.send(s.id, "edit");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(statuses).toContain("waiting");
+    mgr.resolveDecision("t1", true);
+    await sending;
+  });
 });
 
 describe("SessionManager — streaming + auto/deny classification", () => {

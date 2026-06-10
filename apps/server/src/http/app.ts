@@ -18,6 +18,19 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono {
 
   app.get("/api/sessions", (c) => c.json(manager.list()));
 
+  app.get("/api/stream", (c) => {
+    return streamSSE(c, async (stream) => {
+      const unsub = manager.subscribeAll((event) => {
+        void stream.writeSSE({ event: event.type, data: JSON.stringify(event) });
+      });
+      stream.onAbort(() => unsub());
+      while (!stream.aborted) {
+        await stream.sleep(15000);
+        await stream.writeSSE({ event: "ping", data: "{}" });
+      }
+    });
+  });
+
   app.post("/api/sessions", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as { title?: unknown; cwd?: unknown };
     const meta = await manager.createSession({
@@ -27,10 +40,14 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono {
     return c.json(meta, 201);
   });
 
+  app.get("/api/sessions/:id/history", async (c) => {
+    return c.json(await manager.history(c.req.param("id")));
+  });
+
   app.post("/api/sessions/:id/messages", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as { text?: unknown };
     const text = typeof body.text === "string" ? body.text : "";
-    void manager.send(c.req.param("id"), text);
+    manager.send(c.req.param("id"), text).catch((err) => console.error("send failed:", err));
     return c.json({ accepted: true }, 202);
   });
 

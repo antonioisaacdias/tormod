@@ -3,10 +3,18 @@ import type { PermissionDecision, ToolRequest } from "../types.js";
 /** Events streamed from the brain to the host (provider-neutral). */
 export type BrainEvent =
   | { type: "text"; text: string }
+  | { type: "thinking"; text: string }
   | { type: "tool_use"; id: string; request: ToolRequest }
   | { type: "tool_result"; id: string; ok: boolean; summary: string }
   | { type: "result"; ok: boolean; costUsd?: number }
+  | { type: "usage"; model?: string; contextTokens?: number; contextWindow?: number; fiveHourPct?: number; sevenDayPct?: number }
   | { type: "error"; message: string };
+
+/** A past turn reconstructed from the durable transcript (provider-neutral). */
+export type HistoryItem =
+  | { role: "user"; text: string }
+  | { role: "brain"; text: string }
+  | { role: "tool"; tool: string; input: Record<string, unknown> };
 
 /** Decision returned to the brain for a pending tool use. */
 export interface PermissionResponse {
@@ -39,10 +47,16 @@ export interface BrainAdapter {
   sendMessage(id: string, text: string): Promise<void>;
   /** Tear down the live process for a session (transcript persists). */
   close(id: string): Promise<void>;
+  /** Reconstruct past turns from the durable transcript (empty if unknown). */
+  history(id: string): Promise<HistoryItem[]>;
   /** Register the stream handler for brain events. */
   onEvent(handler: (sessionId: string, event: BrainEvent) => void): void;
   /** Register the permission handler (the approval-card bridge). */
   onPermissionRequest(handler: PermissionHandler): void;
+  /** Register a callback fired once the brain's durable session id is known. */
+  onSessionId(handler: (sessionId: string, brainSessionId: string) => void): void;
+  /** Seed a known session→brain-id mapping (e.g. rehydrated after a restart). */
+  registerSession(sessionId: string, brainSessionId: string): void;
 }
 
 export type { PermissionDecision, ToolRequest };

@@ -12,6 +12,7 @@ import type {
 export class FakeBrainAdapter implements BrainAdapter {
   private eventHandler: ((sessionId: string, event: BrainEvent) => void) | null = null;
   private permissionHandler: PermissionHandler | null = null;
+  private sessionIdHandler: ((sessionId: string, brainSessionId: string) => void) | null = null;
   private queued: BrainEvent[] = [];
   private counter = 0;
   private readonly live = new Set<string>();
@@ -19,6 +20,7 @@ export class FakeBrainAdapter implements BrainAdapter {
   async startSession(_opts: { cwd?: string }): Promise<string> {
     const id = `fake-${++this.counter}`;
     this.live.add(id);
+    this.sessionIdHandler?.(id, id);
     return id;
   }
 
@@ -30,12 +32,24 @@ export class FakeBrainAdapter implements BrainAdapter {
     this.live.delete(id);
   }
 
+  async history(_id: string): Promise<[]> {
+    return [];
+  }
+
   onEvent(handler: (sessionId: string, event: BrainEvent) => void): void {
     this.eventHandler = handler;
   }
 
   onPermissionRequest(handler: PermissionHandler): void {
     this.permissionHandler = handler;
+  }
+
+  onSessionId(handler: (sessionId: string, brainSessionId: string) => void): void {
+    this.sessionIdHandler = handler;
+  }
+
+  registerSession(_sessionId: string, _brainSessionId: string): void {
+    // No durable transcript to map to; nothing to seed.
   }
 
   /** Queue the events the next sendMessage() will replay. */
