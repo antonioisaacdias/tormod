@@ -3,20 +3,7 @@ import { decide as decideApi, getHistory, interruptSession, sendMessage, streamS
 import { appendUserMessage, emptyThread, foldEvent, seedThread, setDecision, type ThreadState } from '@/lib/foldEvents'
 import type { ApprovalDecision } from '@/types/thread'
 import type { SessionUsage } from '@/types/usage'
-
-type UsageEvent = {
-  model?: string
-  contextTokens?: number
-  contextWindow?: number
-  fiveHourPct?: number
-  sevenDayPct?: number
-}
-
-const INITIAL_USAGE: SessionUsage = {
-  model: 'claude code',
-  context: { usedTokens: 0, totalTokens: 200_000 },
-  limits: { fiveHour: 0, sevenDay: 0 },
-}
+import { INITIAL_USAGE, mergeUsage } from '@/lib/usage'
 
 export interface SessionRuntime {
   thread: ThreadState
@@ -141,18 +128,4 @@ export function useSessionThreads() {
   const get = useCallback((id: string | null): SessionRuntime => (id && runtimes[id]) || EMPTY_RUNTIME, [runtimes])
 
   return { ensure, drop, get, send, decide, interrupt }
-}
-
-function mergeUsage(prev: SessionUsage, event: UsageEvent): SessionUsage {
-  return {
-    model: event.model ?? prev.model,
-    context: {
-      usedTokens: event.contextTokens ?? prev.context.usedTokens,
-      totalTokens: event.contextWindow ?? prev.context.totalTokens,
-    },
-    limits: {
-      fiveHour: event.fiveHourPct ?? prev.limits.fiveHour,
-      sevenDay: event.sevenDayPct ?? prev.limits.sevenDay,
-    },
-  }
 }
