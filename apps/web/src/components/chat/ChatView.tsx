@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { ChevronLeft, Cpu } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { toneText } from '@/lib/toneClass'
@@ -40,6 +41,25 @@ export function ChatView({
   onBack,
 }: ChatViewProps) {
   const status = statusPresentation(working ? 'working' : session.status)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const stick = useRef(true)
+
+  useEffect(() => {
+    stick.current = true
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [session.id])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el && stick.current) el.scrollTop = el.scrollHeight
+  }, [items, working])
+
+  function handleScroll() {
+    const el = scrollRef.current
+    if (!el) return
+    stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-ink">
@@ -62,7 +82,11 @@ export function ChatView({
         </Badge>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-4 py-5 lg:px-6">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-4 py-5 lg:px-6"
+      >
         <Thread items={items} decisions={decisions} working={working} onDecide={onDecide} />
       </div>
 
