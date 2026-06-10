@@ -21,6 +21,7 @@ interface ChatViewProps {
   draft: string
   onDraftChange: (value: string) => void
   onSend: (text: string) => void
+  onStop: () => void
   onDecide: (toolUseId: string, decision: ApprovalDecision) => void
   onBack: () => void
 }
@@ -34,6 +35,7 @@ export function ChatView({
   draft,
   onDraftChange,
   onSend,
+  onStop,
   onDecide,
   onBack,
 }: ChatViewProps) {
@@ -70,6 +72,8 @@ export function ChatView({
           value={draft}
           onChange={onDraftChange}
           onSubmit={onSend}
+          working={working}
+          onStop={onStop}
           placeholder={`Responder ao Claude Code na sessão ${session.node}…`}
         />
       </div>

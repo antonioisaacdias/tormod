@@ -28,6 +28,10 @@ export class FakeBrainAdapter implements BrainAdapter {
     this.live.add(id);
   }
 
+  async interrupt(_id: string): Promise<void> {
+    // No live process to interrupt in the fake.
+  }
+
   async close(id: string): Promise<void> {
     this.live.delete(id);
   }

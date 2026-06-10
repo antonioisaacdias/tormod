@@ -45,6 +45,8 @@ export interface BrainAdapter {
   resumeSession(id: string): Promise<void>;
   /** Send a user message into a live session. */
   sendMessage(id: string, text: string): Promise<void>;
+  /** Stop the current turn without closing the session (it stays live for more messages). */
+  interrupt(id: string): Promise<void>;
   /** Tear down the live process for a session (transcript persists). */
   close(id: string): Promise<void>;
   /** Reconstruct past turns from the durable transcript (empty if unknown). */

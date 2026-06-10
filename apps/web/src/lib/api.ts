@@ -54,6 +54,10 @@ export async function sendMessage(id: string, text: string): Promise<void> {
   )
 }
 
+export async function interruptSession(id: string): Promise<void> {
+  await expectOk(await fetch(`/api/sessions/${id}/interrupt`, { method: 'POST', headers: authHeaders() }))
+}
+
 export async function closeSession(id: string): Promise<void> {
   await expectOk(await fetch(`/api/sessions/${id}/close`, { method: 'POST', headers: authHeaders() }))
 }

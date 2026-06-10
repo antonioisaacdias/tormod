@@ -112,6 +112,7 @@ export function App() {
             draft={drafts[active.id] ?? ''}
             onDraftChange={changeDraft}
             onSend={onSend}
+            onStop={() => void threads.interrupt(active.id)}
             onDecide={(toolUseId, decision) => void threads.decide(active.id, toolUseId, decision)}
             onBack={() => setMobileChat(false)}
           />

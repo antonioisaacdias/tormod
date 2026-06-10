@@ -60,6 +60,11 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono {
     return c.json({ accepted: true }, 202);
   });
 
+  app.post("/api/sessions/:id/interrupt", async (c) => {
+    await manager.interrupt(c.req.param("id"));
+    return c.json({ interrupted: true });
+  });
+
   app.post("/api/sessions/:id/close", async (c) => {
     await manager.close(c.req.param("id"));
     return c.json({ closed: true });

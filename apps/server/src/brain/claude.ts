@@ -117,6 +117,12 @@ export class ClaudeCodeAdapter implements BrainAdapter {
     });
   }
 
+  async interrupt(id: string): Promise<void> {
+    const session = this.sessions.get(id);
+    if (!session) return;
+    await session.q.interrupt().catch(() => {});
+  }
+
   async close(id: string): Promise<void> {
     const session = this.sessions.get(id);
     if (!session) return;

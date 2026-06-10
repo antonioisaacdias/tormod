@@ -175,6 +175,10 @@ export class SessionManager {
     return this.adapter.history(id);
   }
 
+  async interrupt(id: string): Promise<void> {
+    await this.adapter.interrupt(id);
+  }
+
   async close(id: string): Promise<void> {
     await this.adapter.close(id);
     const meta = this.sessions.get(id);

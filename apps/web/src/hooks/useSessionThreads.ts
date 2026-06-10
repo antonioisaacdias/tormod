@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { decide as decideApi, getHistory, sendMessage, streamSession } from '@/lib/api'
+import { decide as decideApi, getHistory, interruptSession, sendMessage, streamSession } from '@/lib/api'
 import { appendUserMessage, emptyThread, foldEvent, seedThread, setDecision, type ThreadState } from '@/lib/foldEvents'
 import type { ApprovalDecision } from '@/types/thread'
 import type { SessionUsage } from '@/types/usage'
@@ -125,9 +125,22 @@ export function useSessionThreads() {
     [update],
   )
 
+  const interrupt = useCallback(
+    async (id: string) => {
+      if (!id) return
+      update(id, (r) => ({ ...r, working: false }))
+      try {
+        await interruptSession(id)
+      } catch (err) {
+        console.error('interrupt', err)
+      }
+    },
+    [update],
+  )
+
   const get = useCallback((id: string | null): SessionRuntime => (id && runtimes[id]) || EMPTY_RUNTIME, [runtimes])
 
-  return { ensure, drop, get, send, decide }
+  return { ensure, drop, get, send, decide, interrupt }
 }
 
 function mergeUsage(prev: SessionUsage, event: UsageEvent): SessionUsage {

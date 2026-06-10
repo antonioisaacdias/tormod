@@ -40,6 +40,18 @@ describe("SessionManager — lifecycle", () => {
     await expect(mgr.send("ghost", "x")).resolves.toBeUndefined();
   });
 
+  it("interrupt delegates to the adapter without closing the session", async () => {
+    const { fake, mgr } = setup();
+    let interrupted = "";
+    fake.interrupt = async (id: string) => {
+      interrupted = id;
+    };
+    const s = await mgr.createSession({});
+    await mgr.interrupt(s.id);
+    expect(interrupted).toBe(s.id);
+    expect(mgr.list().find((x) => x.id === s.id)!.status).toBe("live");
+  });
+
   it("broadcasts session_status working then idle across a turn", async () => {
     const { fake, mgr } = setup();
     const s = await mgr.createSession({});
