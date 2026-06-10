@@ -3,6 +3,13 @@ import { classifyTool } from "../permission/policy.js";
 import { Audit } from "../audit/audit.js";
 import type { SessionStore } from "./store.js";
 import type { GlobalEvent, ServerEvent, SessionActivity } from "./events.js";
+import { DEFAULTS, type Settings, type SettingsStore } from "../settings/store.js";
+
+const MODEL_IDS: Record<"opus" | "sonnet" | "haiku", string> = {
+  opus: "claude-opus-4-8",
+  sonnet: "claude-sonnet-4-6",
+  haiku: "claude-haiku-4-5",
+};
 
 export interface SessionMeta {
   id: string;
@@ -37,6 +44,7 @@ export class SessionManager {
     private readonly adapter: BrainAdapter,
     private readonly audit: Audit,
     private readonly store?: SessionStore,
+    private readonly settingsStore?: SettingsStore,
     private readonly classify = classifyTool,
   ) {
     this.adapter.onEvent((sessionId, event) => this.onBrainEvent(sessionId, event));
@@ -70,8 +78,19 @@ export class SessionManager {
     }
   }
 
+  private settings(): Settings {
+    return this.settingsStore?.get() ?? DEFAULTS;
+  }
+
   async createSession(opts: { title?: string; cwd?: string }): Promise<SessionMeta> {
-    const id = await this.adapter.startSession({ ...(opts.cwd ? { cwd: opts.cwd } : {}) });
+    const cfg = this.settings();
+    const model = cfg.defaultModel === "auto" ? undefined : MODEL_IDS[cfg.defaultModel];
+    const effort = cfg.defaultEffort === "auto" ? undefined : cfg.defaultEffort;
+    const id = await this.adapter.startSession({
+      ...(opts.cwd ? { cwd: opts.cwd } : {}),
+      ...(model ? { model } : {}),
+      ...(effort ? { effort } : {}),
+    });
     const now = new Date().toISOString();
     const meta: SessionMeta = {
       id,

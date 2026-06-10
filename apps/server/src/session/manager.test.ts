@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { SessionManager } from "./manager.js";
 import { FakeBrainAdapter } from "../brain/fake.js";
 import { Audit } from "../audit/audit.js";
+import { SettingsStore } from "../settings/store.js";
 import type { ServerEvent } from "./events.js";
 
 function setup() {
@@ -77,6 +78,20 @@ describe("SessionManager — lifecycle", () => {
     await mgr.send(s.id, "hi");
     const after = mgr.list().find((x) => x.id === s.id)!.lastActivityAt;
     expect(after >= created!).toBe(true);
+  });
+
+  it("applies default model/effort from settings on create", async () => {
+    const audit = Audit.open(":memory:");
+    const settings = SettingsStore.open(":memory:");
+    settings.save({ defaultModel: "opus", defaultEffort: "high" });
+    let captured: { model?: string; effort?: string } | undefined;
+    const fake = new FakeBrainAdapter();
+    const orig = fake.startSession.bind(fake);
+    fake.startSession = (opts) => { captured = opts; return orig(opts); };
+    const mgr = new SessionManager(fake, audit, undefined, settings);
+    await mgr.createSession({});
+    expect(captured?.model).toBe("claude-opus-4-8");
+    expect(captured?.effort).toBe("high");
   });
 });
 
