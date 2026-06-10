@@ -15,6 +15,11 @@ import type {
   PermissionHandler,
 } from "./adapter.js";
 
+const ASK_INLINE_MESSAGE =
+  "Esta interface de chat não tem seletor de perguntas. Em vez da ferramenta AskUserQuestion, " +
+  "faça a pergunta diretamente na sua resposta, em texto — liste as opções de forma clara " +
+  "(ex.: lista numerada com uma linha por opção) e aguarde a resposta do usuário pela conversa.";
+
 /** The SDK `getSessionMessages`, narrowed (and faked in tests). */
 export type GetMessagesFn = (
   sessionId: string,
@@ -146,6 +151,11 @@ export class ClaudeCodeAdapter implements BrainAdapter {
     };
 
     const canUseTool: CanUseTool = async (toolName, input, o) => {
+      // AskUserQuestion has no structured picker in this chat UI (it would render
+      // as a nonsensical allow/deny card). Steer the brain to ask inline as text.
+      if (toolName === "AskUserQuestion") {
+        return { behavior: "deny", message: ASK_INLINE_MESSAGE };
+      }
       const handler = this.permissionHandler;
       if (!handler) return { behavior: "deny", message: "permission handler unavailable" };
       const resp = await handler(publicId, { tool: toolName, input }, o.toolUseID);

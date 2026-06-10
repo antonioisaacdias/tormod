@@ -318,6 +318,38 @@ describe("ClaudeCodeAdapter", () => {
     expect(events.filter((e) => e.type === "text").map((e) => (e.type === "text" ? e.text : ""))).toEqual(["ba", "nana"]);
   });
 
+  it("denies AskUserQuestion without hitting the permission handler (steer inline)", async () => {
+    let handlerCalled = false;
+    let decision: { behavior: string; message?: string } | undefined;
+    const adapter = new ClaudeCodeAdapter({
+      queryFn: (params) => {
+        const gen = (async function* (): AsyncGenerator<SDKMessage, void> {
+          yield initMsg("aq1");
+          for await (const _u of params.prompt) {
+            decision = await params.options!.canUseTool!("AskUserQuestion", { questions: [] }, {
+              signal: new AbortController().signal,
+              toolUseID: "q1",
+            });
+            yield resultMsg("aq1", true, 0);
+          }
+        })();
+        return Object.assign(gen, { interrupt: async () => void (await gen.return()) });
+      },
+    });
+    adapter.onPermissionRequest(async () => {
+      handlerCalled = true;
+      return { allow: true };
+    });
+
+    const id = await adapter.startSession({});
+    await adapter.sendMessage(id, "ask me");
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(handlerCalled).toBe(false);
+    expect(decision?.behavior).toBe("deny");
+    expect(decision?.message).toMatch(/AskUserQuestion/);
+  });
+
   it("history reads the transcript and maps user/brain/tool turns", async () => {
     const transcript: SessionMessage[] = [
       { type: "user", uuid: "1", session_id: "h1", parent_tool_use_id: null, message: { role: "user", content: "que horas são?" } },
