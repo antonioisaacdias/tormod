@@ -38,3 +38,17 @@ const app = createApp(manager, { token, settings });
 serve({ fetch: app.fetch, port, hostname: "127.0.0.1" }, (info) => {
   console.error(`Tormod server listening on http://127.0.0.1:${info.port}`);
 });
+
+// Graceful shutdown: close every live session so the brain subprocesses are
+// torn down instead of being orphaned (reparented to init) on restart.
+let shuttingDown = false;
+async function shutdown(): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  await Promise.allSettled(
+    manager.list().filter((s) => s.status === "live").map((s) => manager.close(s.id)),
+  );
+  process.exit(0);
+}
+process.on("SIGTERM", () => void shutdown());
+process.on("SIGINT", () => void shutdown());
