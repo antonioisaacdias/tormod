@@ -39,6 +39,7 @@ export class SessionManager {
   private readonly subscribers = new Map<string, Set<Subscriber>>();
   private readonly globalSubs = new Set<(event: GlobalEvent) => void>();
   private readonly pending = new Map<string, Pending>();
+  private sweepTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private readonly adapter: BrainAdapter,
@@ -55,6 +56,10 @@ export class SessionManager {
       this.store?.setClaudeId(sessionId, brainSessionId),
     );
     if (this.store) this.hydrate(this.store);
+    if (this.settingsStore) {
+      this.sweepTimer = setInterval(() => void this.sweepIdle(), 60_000);
+      this.sweepTimer.unref?.();
+    }
   }
 
   /**
@@ -210,6 +215,24 @@ export class SessionManager {
     else if (event.type === "text" || event.type === "thinking" || event.type === "tool_use" || event.type === "tool_result") {
       this.setActivity(sessionId, "working");
     }
+  }
+
+  async sweepIdle(): Promise<void> {
+    const hours = this.settings().idleCloseHours;
+    if (hours <= 0) return;
+    const cutoff = Date.now() - hours * 3600_000;
+    const stale = [...this.sessions.values()].filter(
+      (m) =>
+        m.status === "live" &&
+        m.activity !== "working" &&
+        m.activity !== "waiting" &&
+        Date.parse(m.lastActivityAt) < cutoff,
+    );
+    for (const m of stale) await this.close(m.id);
+  }
+
+  dispose(): void {
+    if (this.sweepTimer) clearInterval(this.sweepTimer);
   }
 
   private onPermission(

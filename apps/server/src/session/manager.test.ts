@@ -110,6 +110,26 @@ describe("SessionManager — lifecycle", () => {
     expect(live.length).toBe(2);
   });
 
+  it("sweepIdle closes sessions idle beyond idleCloseHours and respects 0=off", async () => {
+    const audit = Audit.open(":memory:");
+    const settings = SettingsStore.open(":memory:");
+    settings.save({ idleCloseHours: 1 });
+    const mgr = new SessionManager(new FakeBrainAdapter(), audit, undefined, settings);
+    const a = await mgr.createSession({ title: "a" });
+    const meta = mgr.list().find((s) => s.id === a.id)!;
+    (meta as { lastActivityAt: string }).lastActivityAt = new Date(Date.now() - 2 * 3600_000).toISOString();
+    await mgr.sweepIdle();
+    expect(mgr.list().find((s) => s.id === a.id)!.status).toBe("closed");
+
+    settings.save({ idleCloseHours: 0 });
+    const b = await mgr.createSession({ title: "b" });
+    const mb = mgr.list().find((s) => s.id === b.id)!;
+    (mb as { lastActivityAt: string }).lastActivityAt = new Date(Date.now() - 99 * 3600_000).toISOString();
+    await mgr.sweepIdle();
+    expect(mgr.list().find((s) => s.id === b.id)!.status).toBe("live");
+    mgr.dispose();
+  });
+
   it("does not close a working session to honor the cap", async () => {
     const audit = Audit.open(":memory:");
     const settings = SettingsStore.open(":memory:");
