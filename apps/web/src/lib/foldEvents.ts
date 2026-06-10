@@ -95,6 +95,9 @@ export function foldEvent(state: ThreadState, event: ServerEvent): ThreadState {
       return appendWork(state, { type: 'thinking', text: event.text }, true)
 
     case 'tool_use':
+      // AskUserQuestion is denied server-side and re-asked inline as text — don't
+      // clutter the work balloon with its raw JSON.
+      if (event.request.tool === 'AskUserQuestion') return state
       return appendWork(state, toolEntry(event.id, event.request), false)
 
     case 'permission_request': {

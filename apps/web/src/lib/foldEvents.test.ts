@@ -36,6 +36,13 @@ describe('foldEvents — work balloon grouping', () => {
     expect(entry).toEqual({ type: 'tool', id: 't1', tool: 'Task', command: 'Explore: achar bug', detail: 'instruções completas e longas aqui' })
   })
 
+  it('skips AskUserQuestion tool_use (re-asked inline, not in the work balloon)', () => {
+    const state = fold([
+      { type: 'tool_use', id: 'q1', request: { tool: 'AskUserQuestion', input: { questions: [{ question: 'cor?' }] } } },
+    ])
+    expect(state.items).toHaveLength(0)
+  })
+
   it('a brain text message closes the work balloon and renders a bubble', () => {
     const state = fold([
       { type: 'thinking', text: 'pensando' },
