@@ -110,7 +110,19 @@ export class SessionManager {
       createdAt: meta.createdAt,
       lastActivityAt: meta.lastActivityAt,
     });
+    await this.enforceCap(id);
     return meta;
+  }
+
+  private async enforceCap(exceptId: string): Promise<void> {
+    const max = this.settings().maxLiveSessions;
+    const live = [...this.sessions.values()].filter((m) => m.status === "live");
+    if (live.length <= max) return;
+    const idle = live
+      .filter((m) => m.id !== exceptId && m.activity !== "working" && m.activity !== "waiting")
+      .sort((x, y) => x.lastActivityAt.localeCompare(y.lastActivityAt));
+    const toClose = idle.slice(0, live.length - max);
+    for (const m of toClose) await this.close(m.id);
   }
 
   list(): SessionMeta[] {

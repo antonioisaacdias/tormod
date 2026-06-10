@@ -93,6 +93,38 @@ describe("SessionManager — lifecycle", () => {
     expect(captured?.model).toBe("claude-opus-4-8");
     expect(captured?.effort).toBe("high");
   });
+
+  it("closes the longest-idle session when over the cap", async () => {
+    const audit = Audit.open(":memory:");
+    const settings = SettingsStore.open(":memory:");
+    settings.save({ maxLiveSessions: 2 });
+    const mgr = new SessionManager(new FakeBrainAdapter(), audit, undefined, settings);
+    const a = await mgr.createSession({ title: "a" });
+    await new Promise((r) => setTimeout(r, 5));
+    const b = await mgr.createSession({ title: "b" });
+    await new Promise((r) => setTimeout(r, 5));
+    const c = await mgr.createSession({ title: "c" }); // exceeds cap of 2
+    const live = mgr.list().filter((s) => s.status === "live").map((s) => s.id);
+    expect(live).not.toContain(a.id); // oldest-idle closed
+    expect(live).toEqual(expect.arrayContaining([b.id, c.id]));
+    expect(live.length).toBe(2);
+  });
+
+  it("does not close a working session to honor the cap", async () => {
+    const audit = Audit.open(":memory:");
+    const settings = SettingsStore.open(":memory:");
+    settings.save({ maxLiveSessions: 1 });
+    const fake = new FakeBrainAdapter();
+    const mgr = new SessionManager(fake, audit, undefined, settings);
+    const a = await mgr.createSession({ title: "a" });
+    fake.script([{ type: "tool_use", id: "t1", request: { tool: "Edit", input: { file_path: "/x" } } }]);
+    void mgr.send(a.id, "edit"); // parks on the approval card -> 'a' becomes waiting (active)
+    await new Promise((r) => setTimeout(r, 0));
+    const b = await mgr.createSession({ title: "b" }); // cap=1 but 'a' is active
+    const live = mgr.list().filter((s) => s.status === "live").map((s) => s.id);
+    expect(live).toEqual(expect.arrayContaining([a.id, b.id])); // temporary over-cap
+    mgr.resolveDecision("t1", true);
+  });
 });
 
 describe("SessionManager — streaming + auto/deny classification", () => {
