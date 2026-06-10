@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { InlineText } from './InlineText'
+import { Markdown } from './Markdown'
 import type { InlineSegment, MessageAuthor } from '@/types/thread'
 
 interface MessageBubbleProps {
@@ -26,7 +27,7 @@ export function MessageBubble({ author, segments }: MessageBubbleProps) {
             : 'rounded-bl-[5px] border border-border bg-surface text-frost/90',
         )}
       >
-        <InlineText segments={segments} />
+        {isUser ? <InlineText segments={segments} /> : <Markdown>{segments.map((s) => s.text).join('')}</Markdown>}
       </div>
     </div>
   )
