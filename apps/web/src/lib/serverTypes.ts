@@ -47,4 +47,5 @@ export interface Settings {
   idleCloseHours: number
   defaultModel: 'auto' | 'opus' | 'sonnet' | 'haiku'
   defaultEffort: 'auto' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+  systemPrompt: string
 }

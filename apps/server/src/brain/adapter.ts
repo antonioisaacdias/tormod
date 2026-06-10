@@ -40,7 +40,7 @@ export type PermissionHandler = (
  */
 export interface BrainAdapter {
   /** Start a fresh session; resolves with the session id. */
-  startSession(opts: { cwd?: string; model?: string; effort?: string }): Promise<string>;
+  startSession(opts: { cwd?: string; model?: string; effort?: string; systemPrompt?: string }): Promise<string>;
   /** Resume an existing session by id. */
   resumeSession(id: string): Promise<void>;
   /** Send a user message into a live session. */

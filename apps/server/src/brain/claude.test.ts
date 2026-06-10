@@ -390,9 +390,10 @@ describe("ClaudeCodeAdapter", () => {
         return Object.assign(gen, { interrupt: async () => void (await gen.return()) });
       },
     });
-    await adapter.startSession({ model: "claude-opus-4-8", effort: "high" });
+    await adapter.startSession({ model: "claude-opus-4-8", effort: "high", systemPrompt: "rodando no debian, sem localhost" });
     expect(captured?.model).toBe("claude-opus-4-8");
     expect((captured as { effort?: string }).effort).toBe("high");
+    expect(captured?.systemPrompt).toEqual({ type: "preset", preset: "claude_code", append: "rodando no debian, sem localhost" });
   });
 
   it("reconnects under the same public id, and spawns fresh when no Claude id is known", async () => {

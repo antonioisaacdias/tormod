@@ -87,12 +87,13 @@ export class ClaudeCodeAdapter implements BrainAdapter {
     return messages.flatMap(toHistory);
   }
 
-  async startSession(opts: { cwd?: string; model?: string; effort?: string }): Promise<string> {
+  async startSession(opts: { cwd?: string; model?: string; effort?: string; systemPrompt?: string }): Promise<string> {
     const publicId = randomUUID();
     const session = this.spawn(publicId, {
       ...(opts.cwd ? { cwd: opts.cwd } : {}),
       ...(opts.model ? { model: opts.model } : {}),
       ...(opts.effort ? { effort: opts.effort } : {}),
+      ...(opts.systemPrompt ? { systemPrompt: opts.systemPrompt } : {}),
     });
     this.sessions.set(publicId, session);
     void this.runConsumeLoop(session);
@@ -149,7 +150,10 @@ export class ClaudeCodeAdapter implements BrainAdapter {
     this.claudeIds.set(sessionId, brainSessionId);
   }
 
-  private spawn(publicId: string, extra: { cwd?: string; resume?: string; model?: string; effort?: string }): LiveSession {
+  private spawn(
+    publicId: string,
+    extra: { cwd?: string; resume?: string; model?: string; effort?: string; systemPrompt?: string },
+  ): LiveSession {
     const queue = new PushQueue<SDKUserMessage>();
     const session: LiveSession = {
       publicId,
@@ -183,6 +187,9 @@ export class ClaudeCodeAdapter implements BrainAdapter {
       ...(extra.resume ? { resume: extra.resume } : {}),
       ...(extra.model ? { model: extra.model } : {}),
       ...(extra.effort ? { effort: extra.effort as EffortLevel } : {}),
+      ...(extra.systemPrompt
+        ? { systemPrompt: { type: "preset", preset: "claude_code", append: extra.systemPrompt } as const }
+        : {}),
     };
     session.q = this.queryFn({ prompt: queue, options });
     return session;

@@ -16,11 +16,13 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const { settings, saving, unauthorized, save } = useSettings(open)
   const [maxLive, setMaxLive] = useState('')
   const [idleHours, setIdleHours] = useState('')
+  const [prompt, setPrompt] = useState('')
 
   useEffect(() => {
     if (settings) {
       setMaxLive(String(settings.maxLiveSessions))
       setIdleHours(String(settings.idleCloseHours))
+      setPrompt(settings.systemPrompt)
     }
   }, [settings])
 
@@ -101,8 +103,23 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               </select>
             </label>
 
+            <label className="flex flex-col gap-1.5">
+              <span className="font-medium">Contexto do ambiente</span>
+              <textarea
+                rows={5}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onBlur={() => save({ systemPrompt: prompt })}
+                placeholder="Ex.: você roda no odin, controlado de outro PC pela LAN/VPN. Nunca passe links localhost/127.0.0.1 — use o IP da máquina (ex.: 192.168.0.10) ou o domínio público."
+                className="resize-y rounded-lg border border-border bg-surface px-3 py-2 leading-relaxed outline-none focus:border-arc/50"
+              />
+              <span className="text-[11px] text-faint">
+                Texto anexado ao system prompt de toda sessão nova — o cérebro fica ciente do ambiente.
+              </span>
+            </label>
+
             <span className="text-[11px] text-faint">
-              {saving ? 'Salvando…' : 'Modelo e effort valem para sessões novas.'}
+              {saving ? 'Salvando…' : 'Modelo, effort e contexto valem para sessões novas.'}
             </span>
           </div>
         )}

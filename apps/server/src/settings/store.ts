@@ -5,6 +5,8 @@ export interface Settings {
   idleCloseHours: number;
   defaultModel: "auto" | "opus" | "sonnet" | "haiku";
   defaultEffort: "auto" | "low" | "medium" | "high" | "xhigh" | "max";
+  /** Free-text context appended to every new session's system prompt (env, VPN, "no localhost", etc.). */
+  systemPrompt: string;
 }
 
 export const DEFAULTS: Settings = {
@@ -12,7 +14,10 @@ export const DEFAULTS: Settings = {
   idleCloseHours: 6,
   defaultModel: "auto",
   defaultEffort: "auto",
+  systemPrompt: "",
 };
+
+const MAX_PROMPT = 20000;
 
 const MODELS = new Set(["auto", "opus", "sonnet", "haiku"]);
 const EFFORTS = new Set(["auto", "low", "medium", "high", "xhigh", "max"]);
@@ -32,6 +37,7 @@ function normalize(raw: Partial<Settings>): Settings {
     defaultEffort: EFFORTS.has(raw.defaultEffort as string)
       ? (raw.defaultEffort as Settings["defaultEffort"])
       : DEFAULTS.defaultEffort,
+    systemPrompt: typeof raw.systemPrompt === "string" ? raw.systemPrompt.slice(0, MAX_PROMPT) : DEFAULTS.systemPrompt,
   };
 }
 

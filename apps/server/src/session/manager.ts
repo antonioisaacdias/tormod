@@ -95,6 +95,7 @@ export class SessionManager {
       ...(opts.cwd ? { cwd: opts.cwd } : {}),
       ...(model ? { model } : {}),
       ...(effort ? { effort } : {}),
+      ...(cfg.systemPrompt.trim() ? { systemPrompt: cfg.systemPrompt } : {}),
     });
     const now = new Date().toISOString();
     const meta: SessionMeta = {
