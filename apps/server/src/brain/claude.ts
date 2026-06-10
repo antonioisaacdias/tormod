@@ -16,9 +16,10 @@ import type {
 } from "./adapter.js";
 
 const ASK_INLINE_MESSAGE =
-  "Esta interface de chat não tem seletor de perguntas. Em vez da ferramenta AskUserQuestion, " +
-  "faça a pergunta diretamente na sua resposta, em texto — liste as opções de forma clara " +
-  "(ex.: lista numerada com uma linha por opção) e aguarde a resposta do usuário pela conversa.";
+  "Esta interface de chat não tem seletor de perguntas (a ferramenta AskUserQuestion não funciona aqui). " +
+  "Você DEVE agora fazer a(s) mesma(s) pergunta(s) diretamente na sua próxima resposta, em texto: enuncie " +
+  "cada pergunta e liste suas opções de forma clara (lista numerada, uma opção por linha), e então pare e " +
+  "aguarde a resposta do usuário pela conversa. Nunca omita a pergunta nem prossiga sem perguntar.";
 
 /** The SDK `getSessionMessages`, narrowed (and faked in tests). */
 export type GetMessagesFn = (
