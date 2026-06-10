@@ -13,6 +13,7 @@ describe("SettingsStore", () => {
     expect(saved.maxLiveSessions).toBe(3);
     expect(saved.defaultModel).toBe("opus");
     expect(saved.idleCloseHours).toBe(DEFAULTS.idleCloseHours);
+    expect(saved.defaultEffort).toBe(DEFAULTS.defaultEffort);
     expect(s.get()).toEqual(saved);
   });
 

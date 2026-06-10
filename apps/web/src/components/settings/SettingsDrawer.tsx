@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useSettings } from '@/hooks/useSettings'
 import { Button } from '@/components/ui/Button'
@@ -12,7 +13,17 @@ interface SettingsDrawerProps {
 }
 
 export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
-  const { settings, saving, save } = useSettings(open)
+  const { settings, saving, unauthorized, save } = useSettings(open)
+  const [maxLive, setMaxLive] = useState('')
+  const [idleHours, setIdleHours] = useState('')
+
+  useEffect(() => {
+    if (settings) {
+      setMaxLive(String(settings.maxLiveSessions))
+      setIdleHours(String(settings.idleCloseHours))
+    }
+  }, [settings])
+
   if (!open) return null
 
   return (
@@ -28,7 +39,9 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </Button>
         </div>
 
-        {!settings ? (
+        {unauthorized ? (
+          <p className="text-sm text-danger">Sessão expirada. Recarregue a página e entre com o token novamente.</p>
+        ) : !settings ? (
           <p className="text-sm text-faint">Carregando…</p>
         ) : (
           <div className="flex flex-col gap-5 text-sm">
@@ -38,8 +51,9 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
                 type="number"
                 min={1}
                 max={50}
-                defaultValue={settings.maxLiveSessions}
-                onChange={(e) => save({ maxLiveSessions: Number(e.target.value) })}
+                value={maxLive}
+                onChange={(e) => setMaxLive(e.target.value)}
+                onBlur={() => save({ maxLiveSessions: Number(maxLive) })}
                 className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
               />
               <span className="text-[11px] text-faint">
@@ -53,8 +67,9 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
                 type="number"
                 min={0}
                 max={168}
-                defaultValue={settings.idleCloseHours}
-                onChange={(e) => save({ idleCloseHours: Number(e.target.value) })}
+                value={idleHours}
+                onChange={(e) => setIdleHours(e.target.value)}
+                onBlur={() => save({ idleCloseHours: Number(idleHours) })}
                 className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
               />
               <span className="text-[11px] text-faint">0 desliga o fechamento automático por ociosidade.</span>
@@ -63,7 +78,7 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             <label className="flex flex-col gap-1.5">
               <span className="font-medium">Modelo padrão</span>
               <select
-                defaultValue={settings.defaultModel}
+                value={settings.defaultModel}
                 onChange={(e) => save({ defaultModel: e.target.value as Settings['defaultModel'] })}
                 className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
               >
@@ -76,7 +91,7 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             <label className="flex flex-col gap-1.5">
               <span className="font-medium">Effort padrão</span>
               <select
-                defaultValue={settings.defaultEffort}
+                value={settings.defaultEffort}
                 onChange={(e) => save({ defaultEffort: e.target.value as Settings['defaultEffort'] })}
                 className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
               >
