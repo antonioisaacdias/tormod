@@ -8,23 +8,36 @@ import { StatusDot } from '@/components/ui/StatusDot'
 import { Thread } from './Thread'
 import { Composer } from './Composer'
 import { StatusLine } from './StatusLine'
-import { useThreadDecisions } from './useThreadDecisions'
 import type { Session } from '@/types/session'
 import type { SessionUsage } from '@/types/usage'
-import type { ThreadItem } from '@/types/thread'
+import type { ApprovalDecision, ThreadItem } from '@/types/thread'
 
 interface ChatViewProps {
   session: Session
   items: ThreadItem[]
   usage: SessionUsage
+  decisions: Record<string, ApprovalDecision>
+  working: boolean
   draft: string
   onDraftChange: (value: string) => void
+  onSend: (text: string) => void
+  onDecide: (toolUseId: string, decision: ApprovalDecision) => void
   onBack: () => void
 }
 
-export function ChatView({ session, items, usage, draft, onDraftChange, onBack }: ChatViewProps) {
-  const { decisions, decide } = useThreadDecisions()
-  const status = statusPresentation(session.status)
+export function ChatView({
+  session,
+  items,
+  usage,
+  decisions,
+  working,
+  draft,
+  onDraftChange,
+  onSend,
+  onDecide,
+  onBack,
+}: ChatViewProps) {
+  const status = statusPresentation(working ? 'working' : session.status)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-ink">
@@ -48,7 +61,7 @@ export function ChatView({ session, items, usage, draft, onDraftChange, onBack }
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-4 py-5 lg:px-6">
-        <Thread items={items} decisions={decisions} onDecide={decide} />
+        <Thread items={items} decisions={decisions} working={working} onDecide={onDecide} />
       </div>
 
       <div className="shrink-0 border-t border-border px-4 pb-3.5 pt-3 lg:px-6">
@@ -56,6 +69,7 @@ export function ChatView({ session, items, usage, draft, onDraftChange, onBack }
         <Composer
           value={draft}
           onChange={onDraftChange}
+          onSubmit={onSend}
           placeholder={`Responder ao Claude Code na sessão ${session.node}…`}
         />
       </div>

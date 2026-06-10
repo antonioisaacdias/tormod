@@ -14,10 +14,11 @@ interface SessionListProps {
   activeId: string
   drafts: Record<string, string>
   onSelect: (id: string) => void
+  onCreate?: () => void
   onSessionAction?: (id: string, action: SessionAction) => void
 }
 
-export function SessionList({ sessions, activeId, drafts, onSelect, onSessionAction }: SessionListProps) {
+export function SessionList({ sessions, activeId, drafts, onSelect, onCreate, onSessionAction }: SessionListProps) {
   const [view, setView] = useState(DEFAULT_SESSION_VIEW)
   const visible = applySessionView(sessions, view)
   const liveCount = sessions.filter((session) => session.live).length
@@ -54,7 +55,7 @@ export function SessionList({ sessions, activeId, drafts, onSelect, onSessionAct
         )}
       </div>
 
-      <Button className="mt-3 w-full">
+      <Button className="mt-3 w-full" onClick={onCreate}>
         <Plus className="size-4" /> Nova sessão
       </Button>
     </div>

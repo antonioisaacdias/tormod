@@ -14,5 +14,11 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     allowedHosts: ['tormod.diaslabs.com.br'],
+    proxy: {
+      '/api': {
+        target: process.env.TORMOD_API ?? 'http://127.0.0.1:8790',
+        changeOrigin: true,
+      },
+    },
   },
 })
