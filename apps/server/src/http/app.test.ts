@@ -3,10 +3,12 @@ import { createApp } from "./app.js";
 import { SessionManager } from "../session/manager.js";
 import { FakeBrainAdapter } from "../brain/fake.js";
 import { Audit } from "../audit/audit.js";
+import { SettingsStore } from "../settings/store.js";
 
 function app() {
+  const settings = SettingsStore.open(":memory:");
   const mgr = new SessionManager(new FakeBrainAdapter(), Audit.open(":memory:"));
-  return createApp(mgr, { token: "secret" });
+  return createApp(mgr, { token: "secret", settings });
 }
 const auth = { Authorization: "Bearer secret" };
 
@@ -48,5 +50,34 @@ describe("createApp — sessions", () => {
       body: JSON.stringify({ text: "hello" }),
     });
     expect(res.status).toBe(202);
+  });
+});
+
+describe("createApp — settings", () => {
+  it("GET /api/settings returns defaults; PUT updates", async () => {
+    const settings = SettingsStore.open(":memory:");
+    const a = createApp(
+      new SessionManager(new FakeBrainAdapter(), Audit.open(":memory:"), undefined, settings),
+      { token: "t", settings },
+    );
+    const h = { Authorization: "Bearer t", "Content-Type": "application/json" };
+
+    const got = await a.request("/api/settings", { headers: h });
+    expect(got.status).toBe(200);
+    expect(((await got.json()) as { maxLiveSessions: number }).maxLiveSessions).toBe(5);
+
+    const put = await a.request("/api/settings", { method: "PUT", headers: h, body: JSON.stringify({ maxLiveSessions: 3 }) });
+    expect(put.status).toBe(200);
+    expect(((await put.json()) as { maxLiveSessions: number }).maxLiveSessions).toBe(3);
+  });
+
+  it("settings routes require auth", async () => {
+    const settings = SettingsStore.open(":memory:");
+    const a = createApp(
+      new SessionManager(new FakeBrainAdapter(), Audit.open(":memory:"), undefined, settings),
+      { token: "t", settings },
+    );
+    const res = await a.request("/api/settings");
+    expect(res.status).toBe(401);
   });
 });

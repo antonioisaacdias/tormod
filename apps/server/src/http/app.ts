@@ -1,9 +1,11 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { SessionManager } from "../session/manager.js";
+import type { SettingsStore } from "../settings/store.js";
 
 export interface AppOptions {
   token: string;
+  settings: SettingsStore;
 }
 
 export function createApp(manager: SessionManager, opts: AppOptions): Hono {
@@ -17,6 +19,13 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono {
   });
 
   app.get("/api/sessions", (c) => c.json(manager.list()));
+
+  app.get("/api/settings", (c) => c.json(opts.settings.get()));
+
+  app.put("/api/settings", async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+    return c.json(opts.settings.save(body));
+  });
 
   app.get("/api/stream", (c) => {
     return streamSSE(c, async (stream) => {

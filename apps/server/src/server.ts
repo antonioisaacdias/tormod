@@ -6,6 +6,7 @@ import { ClaudeCodeAdapter } from "./brain/claude.js";
 import type { BrainAdapter } from "./brain/adapter.js";
 import { Audit } from "./audit/audit.js";
 import { SessionStore } from "./session/store.js";
+import { SettingsStore } from "./settings/store.js";
 
 // A stray rejection (e.g. a brain call failing mid-stream) must never take the
 // daemon down — log and keep serving the other live sessions.
@@ -29,8 +30,10 @@ const brain: BrainAdapter =
     ? new ClaudeCodeAdapter({ streaming: true, options: { ...(cwd ? { cwd } : {}) } })
     : new FakeBrainAdapter();
 
-const manager = new SessionManager(brain, Audit.open(auditPath), SessionStore.open(auditPath));
-const app = createApp(manager, { token });
+const settingsPath = process.env.TORMOD_SETTINGS ?? auditPath;
+const settings = SettingsStore.open(settingsPath);
+const manager = new SessionManager(brain, Audit.open(auditPath), SessionStore.open(auditPath), settings);
+const app = createApp(manager, { token, settings });
 
 serve({ fetch: app.fetch, port, hostname: "127.0.0.1" }, (info) => {
   console.error(`Tormod server listening on http://127.0.0.1:${info.port}`);
