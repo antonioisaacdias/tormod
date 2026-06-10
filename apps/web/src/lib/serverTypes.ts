@@ -15,6 +15,7 @@ export interface SessionMeta {
   title: string
   cwd?: string
   createdAt: string
+  lastActivityAt?: string
   activity?: 'idle' | 'working' | 'waiting'
 }
 

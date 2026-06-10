@@ -1,0 +1,97 @@
+import { X } from 'lucide-react'
+import { useSettings } from '@/hooks/useSettings'
+import { Button } from '@/components/ui/Button'
+import type { Settings } from '@/lib/serverTypes'
+
+const MODELS: Settings['defaultModel'][] = ['auto', 'opus', 'sonnet', 'haiku']
+const EFFORTS: Settings['defaultEffort'][] = ['auto', 'low', 'medium', 'high', 'xhigh', 'max']
+
+interface SettingsDrawerProps {
+  open: boolean
+  onClose: () => void
+}
+
+export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
+  const { settings, saving, save } = useSettings(open)
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
+      <div
+        className="flex h-full w-full max-w-sm flex-col gap-5 border-l border-border bg-deep p-5 text-frost"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold">Configurações</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
+            <X className="size-5" />
+          </Button>
+        </div>
+
+        {!settings ? (
+          <p className="text-sm text-faint">Carregando…</p>
+        ) : (
+          <div className="flex flex-col gap-5 text-sm">
+            <label className="flex flex-col gap-1.5">
+              <span className="font-medium">Máximo de sessões vivas</span>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                defaultValue={settings.maxLiveSessions}
+                onChange={(e) => save({ maxLiveSessions: Number(e.target.value) })}
+                className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
+              />
+              <span className="text-[11px] text-faint">
+                Ao exceder, as sessões ociosas há mais tempo são fechadas automaticamente (turnos em andamento são preservados).
+              </span>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="font-medium">Horas ociosas para fechar</span>
+              <input
+                type="number"
+                min={0}
+                max={168}
+                defaultValue={settings.idleCloseHours}
+                onChange={(e) => save({ idleCloseHours: Number(e.target.value) })}
+                className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
+              />
+              <span className="text-[11px] text-faint">0 desliga o fechamento automático por ociosidade.</span>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="font-medium">Modelo padrão</span>
+              <select
+                defaultValue={settings.defaultModel}
+                onChange={(e) => save({ defaultModel: e.target.value as Settings['defaultModel'] })}
+                className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
+              >
+                {MODELS.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="font-medium">Effort padrão</span>
+              <select
+                defaultValue={settings.defaultEffort}
+                onChange={(e) => save({ defaultEffort: e.target.value as Settings['defaultEffort'] })}
+                className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
+              >
+                {EFFORTS.map((ef) => (
+                  <option key={ef} value={ef}>{ef}</option>
+                ))}
+              </select>
+            </label>
+
+            <span className="text-[11px] text-faint">
+              {saving ? 'Salvando…' : 'Modelo e effort valem para sessões novas.'}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

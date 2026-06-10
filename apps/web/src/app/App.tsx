@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Settings as SettingsIcon } from 'lucide-react'
 import { Brand } from '@/components/Brand'
 import { SessionList } from '@/components/sessions/SessionList'
 import { ChatView } from '@/components/chat/ChatView'
+import { SettingsDrawer } from '@/components/settings/SettingsDrawer'
 import { usePersistentState } from '@/hooks/usePersistentState'
 import { useSessions } from '@/hooks/useSessions'
 import { useSessionThreads } from '@/hooks/useSessionThreads'
@@ -14,6 +16,7 @@ export function App() {
   const { sessions, unauthorized, loading, refresh, create, close, remove } = useSessions()
   const [activeId, setActiveId] = usePersistentState<string | null>('tormod:activeId', null)
   const [mobileChat, setMobileChat] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [drafts, setDrafts] = usePersistentState<Record<string, string>>('tormod:drafts', {})
 
   // Keep the user on their last session across reloads; only fall back to the
@@ -82,7 +85,12 @@ export function App() {
           mobileChat ? 'hidden' : 'flex w-full',
         )}
       >
-        <Brand />
+        <div className="flex items-center justify-between">
+          <Brand />
+          <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(true)} aria-label="Configurações">
+            <SettingsIcon className="size-5" />
+          </Button>
+        </div>
         <SessionList
           sessions={sessions}
           activeId={activeId ?? ''}
@@ -116,6 +124,7 @@ export function App() {
           </div>
         )}
       </main>
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

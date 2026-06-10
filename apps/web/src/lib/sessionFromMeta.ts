@@ -25,7 +25,7 @@ export function sessionFromMeta(meta: SessionMeta): Session {
     title: meta.title,
     node: meta.cwd ? basename(meta.cwd) : 'odin',
     directory: meta.cwd ?? '~',
-    updatedAt: shortTime(meta.createdAt),
+    updatedAt: shortTime(meta.lastActivityAt ?? meta.createdAt),
     snippet: '',
     status,
     live: meta.status === 'live',
