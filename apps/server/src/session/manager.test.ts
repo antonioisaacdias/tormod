@@ -66,6 +66,18 @@ describe("SessionManager — lifecycle", () => {
     mgr.resolveDecision("t1", true);
     await sending;
   });
+
+  it("stamps lastActivityAt on create and bumps it on send", async () => {
+    const { fake, mgr } = setup();
+    const s = await mgr.createSession({});
+    const created = mgr.list().find((x) => x.id === s.id)!.lastActivityAt;
+    expect(created).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 5));
+    fake.script([{ type: "text", text: "x" }, { type: "result", ok: true }]);
+    await mgr.send(s.id, "hi");
+    const after = mgr.list().find((x) => x.id === s.id)!.lastActivityAt;
+    expect(after >= created!).toBe(true);
+  });
 });
 
 describe("SessionManager — streaming + auto/deny classification", () => {

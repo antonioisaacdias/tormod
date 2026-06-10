@@ -10,6 +10,7 @@ export interface SessionMeta {
   title: string;
   cwd?: string;
   createdAt: string;
+  lastActivityAt: string;
   /** Live activity while the session is live (drives the sidebar status dot). */
   activity?: "idle" | "working" | "waiting";
 }
@@ -61,6 +62,7 @@ export class SessionManager {
         title: row.title,
         ...(row.cwd ? { cwd: row.cwd } : {}),
         createdAt: row.createdAt,
+        lastActivityAt: row.lastActivityAt,
       };
       this.sessions.set(row.id, meta);
       if (row.status !== "closed") store.setStatus(row.id, "closed");
@@ -70,14 +72,16 @@ export class SessionManager {
 
   async createSession(opts: { title?: string; cwd?: string }): Promise<SessionMeta> {
     const id = await this.adapter.startSession({ ...(opts.cwd ? { cwd: opts.cwd } : {}) });
+    const now = new Date().toISOString();
     const meta: SessionMeta = {
       id,
       status: "live",
       title: opts.title ?? "Nova sessão",
       ...(opts.cwd ? { cwd: opts.cwd } : {}),
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      lastActivityAt: now,
+      activity: "idle",
     };
-    meta.activity = "idle";
     this.sessions.set(id, meta);
     this.store?.upsert({
       id,
@@ -85,7 +89,7 @@ export class SessionManager {
       ...(meta.cwd ? { cwd: meta.cwd } : {}),
       status: "live",
       createdAt: meta.createdAt,
-      lastActivityAt: meta.createdAt,
+      lastActivityAt: meta.lastActivityAt,
     });
     return meta;
   }
@@ -102,6 +106,7 @@ export class SessionManager {
       meta.status = "live";
       this.store?.setStatus(id, "live");
     }
+    this.touch(id, true);
     this.setActivity(id, "working");
     await this.adapter.sendMessage(id, text);
   }
@@ -111,8 +116,16 @@ export class SessionManager {
     return () => this.globalSubs.delete(fn);
   }
 
+  private touch(id: string, persist: boolean): void {
+    const meta = this.sessions.get(id);
+    if (!meta) return;
+    meta.lastActivityAt = new Date().toISOString();
+    if (persist) this.store?.setActivity(id, meta.lastActivityAt);
+  }
+
   private setActivity(id: string, activity: "idle" | "working" | "waiting"): void {
     const meta = this.sessions.get(id);
+    this.touch(id, false);
     if (!meta || meta.status !== "live" || meta.activity === activity) return;
     meta.activity = activity;
     this.broadcast({ type: "session_status", id, status: activity });
@@ -131,6 +144,7 @@ export class SessionManager {
     const meta = this.sessions.get(id);
     if (meta) meta.status = "closed";
     this.store?.setStatus(id, "closed");
+    if (meta) this.store?.setActivity(id, meta.lastActivityAt);
     this.broadcast({ type: "session_status", id, status: "closed" });
   }
 
