@@ -17,7 +17,7 @@ export class FakeBrainAdapter implements BrainAdapter {
   private counter = 0;
   private readonly live = new Set<string>();
 
-  async startSession(_opts: { cwd?: string }): Promise<string> {
+  async startSession(_opts: { cwd?: string; model?: string; effort?: string }): Promise<string> {
     const id = `fake-${++this.counter}`;
     this.live.add(id);
     this.sessionIdHandler?.(id, id);

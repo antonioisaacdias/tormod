@@ -346,6 +346,23 @@ describe("ClaudeCodeAdapter", () => {
     expect(await adapter.history("nope")).toEqual([]);
   });
 
+  it("passes model and effort into the SDK options", async () => {
+    let captured: Options | undefined;
+    const adapter = new ClaudeCodeAdapter({
+      queryFn: (params) => {
+        captured = params.options;
+        const gen = (async function* (): AsyncGenerator<SDKMessage, void> {
+          yield initMsg("m1");
+          for await (const _u of params.prompt) yield resultMsg("m1", true, 0);
+        })();
+        return Object.assign(gen, { interrupt: async () => void (await gen.return()) });
+      },
+    });
+    await adapter.startSession({ model: "claude-opus-4-8", effort: "high" });
+    expect(captured?.model).toBe("claude-opus-4-8");
+    expect((captured as { effort?: string }).effort).toBe("high");
+  });
+
   it("resume requires a captured Claude id, then reconnects under the same public id", async () => {
     const adapter = new ClaudeCodeAdapter({
       queryFn: fakeQuery("claude-xyz", [

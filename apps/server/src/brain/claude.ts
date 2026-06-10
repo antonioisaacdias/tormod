@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { getSessionMessages, query } from "@anthropic-ai/claude-agent-sdk";
 import type {
   CanUseTool,
+  EffortLevel,
   Options,
   SDKMessage,
   SDKUserMessage,
@@ -80,9 +81,13 @@ export class ClaudeCodeAdapter implements BrainAdapter {
     return messages.flatMap(toHistory);
   }
 
-  async startSession(opts: { cwd?: string }): Promise<string> {
+  async startSession(opts: { cwd?: string; model?: string; effort?: string }): Promise<string> {
     const publicId = randomUUID();
-    const session = this.spawn(publicId, { ...(opts.cwd ? { cwd: opts.cwd } : {}) });
+    const session = this.spawn(publicId, {
+      ...(opts.cwd ? { cwd: opts.cwd } : {}),
+      ...(opts.model ? { model: opts.model } : {}),
+      ...(opts.effort ? { effort: opts.effort } : {}),
+    });
     this.sessions.set(publicId, session);
     void this.runConsumeLoop(session);
     return publicId;
@@ -131,7 +136,7 @@ export class ClaudeCodeAdapter implements BrainAdapter {
     this.claudeIds.set(sessionId, brainSessionId);
   }
 
-  private spawn(publicId: string, extra: { cwd?: string; resume?: string }): LiveSession {
+  private spawn(publicId: string, extra: { cwd?: string; resume?: string; model?: string; effort?: string }): LiveSession {
     const queue = new PushQueue<SDKUserMessage>();
     const session: LiveSession = {
       publicId,
@@ -158,6 +163,8 @@ export class ClaudeCodeAdapter implements BrainAdapter {
         : {}),
       ...(extra.cwd ? { cwd: extra.cwd } : {}),
       ...(extra.resume ? { resume: extra.resume } : {}),
+      ...(extra.model ? { model: extra.model } : {}),
+      ...(extra.effort ? { effort: extra.effort as EffortLevel } : {}),
     };
     session.q = this.queryFn({ prompt: queue, options });
     return session;
