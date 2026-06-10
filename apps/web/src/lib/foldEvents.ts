@@ -179,6 +179,7 @@ export function seedThread(history: HistoryItem[]): ThreadState {
   let seq = 0
   for (const entry of history) {
     if (entry.role === 'tool') {
+      if (entry.tool === 'AskUserQuestion') continue // re-asked inline; never a work-balloon entry
       const last = items[items.length - 1]
       const we = toolEntry(`h${seq++}`, { tool: entry.tool, input: entry.input })
       if (last && last.kind === 'work') {

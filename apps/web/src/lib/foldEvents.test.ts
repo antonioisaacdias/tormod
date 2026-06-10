@@ -119,6 +119,7 @@ describe('foldEvents — seedThread (history)', () => {
   it('groups consecutive tool history into a done work balloon', () => {
     const state = seedThread([
       { role: 'user', text: 'liste' },
+      { role: 'tool', tool: 'AskUserQuestion', input: { questions: [] } }, // skipped, no balloon noise
       { role: 'tool', tool: 'Bash', input: { command: 'ls' } },
       { role: 'tool', tool: 'Read', input: { file_path: '/etc/hosts' } },
       { role: 'brain', text: 'pronto' },
