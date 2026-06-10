@@ -85,6 +85,7 @@ export class SessionManager {
       ...(meta.cwd ? { cwd: meta.cwd } : {}),
       status: "live",
       createdAt: meta.createdAt,
+      lastActivityAt: meta.createdAt,
     });
     return meta;
   }
