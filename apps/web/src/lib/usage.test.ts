@@ -32,8 +32,15 @@ describe('mergeUsage', () => {
     expect(u).toEqual({
       model: 'claude-opus-4-8[1m]',
       context: { usedTokens: 45000, totalTokens: 1_000_000 },
-      limits: { fiveHour: 12, sevenDay: 0 },
+      limits: { fiveHour: 12 },
     })
+  })
+
+  it('leaves rate-limit windows undefined until an adapter supplies them', () => {
+    const u = mergeUsage(INITIAL_USAGE, { model: 'x', contextTokens: 10, contextWindow: 20 })
+    expect(u.limits).toEqual({})
+    expect(u.limits.fiveHour).toBeUndefined()
+    expect(u.limits.sevenDay).toBeUndefined()
   })
 
   it('a partial event never clobbers previously-set fields', () => {

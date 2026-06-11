@@ -27,10 +27,19 @@ export type GetMessagesFn = (
   options?: { dir?: string },
 ) => Promise<SessionMessage[]>;
 
+/** A single rate-limit window from the SDK's experimental /usage data. */
+interface RateLimitWindow {
+  utilization: number | null;
+}
+
 /** The slice of the SDK `Query` object this adapter drives. */
 export type QueryLike = AsyncIterable<SDKMessage> & {
   interrupt(): Promise<void>;
   getContextUsage?(): Promise<{ totalTokens: number; maxTokens: number; model: string }>;
+  usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET?(): Promise<{
+    rate_limits_available: boolean;
+    rate_limits: { five_hour?: RateLimitWindow | null; seven_day?: RateLimitWindow | null } | null;
+  }>;
 };
 
 /** The SDK `query` function, narrowed to what the adapter needs (and faked in tests). */
@@ -214,7 +223,10 @@ export class ClaudeCodeAdapter implements BrainAdapter {
           continue;
         }
         this.translate(session.publicId, msg);
-        if (msg.type === "result") void this.emitContextUsage(session);
+        if (msg.type === "result") {
+          void this.emitContextUsage(session);
+          void this.emitPlanLimits(session);
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -229,6 +241,23 @@ export class ClaudeCodeAdapter implements BrainAdapter {
       this.emit(id, { type: "usage", fiveHourPct: pct });
     } else if (info.rateLimitType.startsWith("seven_day")) {
       this.emit(id, { type: "usage", sevenDayPct: pct });
+    }
+  }
+
+  private async emitPlanLimits(session: LiveSession): Promise<void> {
+    const get = session.q.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET;
+    if (typeof get !== "function") return;
+    try {
+      const u = await get.call(session.q);
+      if (!u.rate_limits_available || !u.rate_limits) return;
+      const five = u.rate_limits.five_hour?.utilization;
+      const seven = u.rate_limits.seven_day?.utilization;
+      const event: { type: "usage"; fiveHourPct?: number; sevenDayPct?: number } = { type: "usage" };
+      if (typeof five === "number") event.fiveHourPct = Math.round(five);
+      if (typeof seven === "number") event.sevenDayPct = Math.round(seven);
+      if (event.fiveHourPct !== undefined || event.sevenDayPct !== undefined) this.emit(session.publicId, event);
+    } catch {
+      // plan rate-limit data is best-effort; ignore failures
     }
   }
 

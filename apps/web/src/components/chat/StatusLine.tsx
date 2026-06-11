@@ -43,10 +43,18 @@ export function StatusLine({ usage }: StatusLineProps) {
       </div>
       <Divider />
       <Metric label="ctx" percentage={contextPercentage} detail={contextDetail} />
-      <Divider />
-      <Metric label="5h" percentage={limits.fiveHour} meterClassName="w-10" />
-      <Divider />
-      <Metric label="7d" percentage={limits.sevenDay} meterClassName="w-10" />
+      {limits.fiveHour !== undefined && (
+        <>
+          <Divider />
+          <Metric label="5h" percentage={limits.fiveHour} meterClassName="w-10" />
+        </>
+      )}
+      {limits.sevenDay !== undefined && (
+        <>
+          <Divider />
+          <Metric label="7d" percentage={limits.sevenDay} meterClassName="w-10" />
+        </>
+      )}
       <Divider />
       <Badge tone="safe">leitura: auto</Badge>
     </div>

@@ -4,8 +4,8 @@ export interface ContextWindow {
 }
 
 export interface RateLimits {
-  fiveHour: number
-  sevenDay: number
+  fiveHour?: number
+  sevenDay?: number
 }
 
 export interface SessionUsage {
