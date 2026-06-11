@@ -1,5 +1,4 @@
 import { Cpu } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
 import { Meter } from '@/components/ui/Meter'
 import { formatTokens } from '@/lib/formatTokens'
 import { usageTone } from '@/lib/usageTone'
@@ -55,8 +54,6 @@ export function StatusLine({ usage }: StatusLineProps) {
           <Metric label="7d" percentage={limits.sevenDay} meterClassName="w-10" />
         </>
       )}
-      <Divider />
-      <Badge tone="safe">leitura: auto</Badge>
     </div>
   )
 }
