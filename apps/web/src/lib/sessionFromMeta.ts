@@ -29,5 +29,6 @@ export function sessionFromMeta(meta: SessionMeta): Session {
     snippet: '',
     status,
     live: meta.status === 'live',
+    ...(meta.usage ? { usage: meta.usage } : {}),
   }
 }

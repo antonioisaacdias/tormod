@@ -3,7 +3,7 @@ import { decide as decideApi, getHistory, interruptSession, sendMessage, streamS
 import { appendUserMessage, emptyThread, foldEvent, seedThread, setDecision, type ThreadState } from '@/lib/foldEvents'
 import type { ApprovalDecision } from '@/types/thread'
 import type { SessionUsage } from '@/types/usage'
-import { INITIAL_USAGE, mergeUsage } from '@/lib/usage'
+import { INITIAL_USAGE, mergeUsage, type UsageEvent } from '@/lib/usage'
 
 export interface SessionRuntime {
   thread: ThreadState
@@ -30,10 +30,11 @@ export function useSessionThreads() {
   // Starts (once) history load + the live stream for a session, accumulating
   // into its own runtime. Idempotent — safe to call on every activeId change.
   const ensure = useCallback(
-    (id: string) => {
+    (id: string, seed?: UsageEvent) => {
       if (!id || started.current.has(id)) return
       started.current.add(id)
-      setRuntimes((current) => ({ ...current, [id]: current[id] ?? EMPTY_RUNTIME }))
+      const initial = seed ? { ...EMPTY_RUNTIME, usage: mergeUsage(INITIAL_USAGE, seed) } : EMPTY_RUNTIME
+      setRuntimes((current) => ({ ...current, [id]: current[id] ?? initial }))
 
       const ctrl = new AbortController()
       ctrls.current.set(id, ctrl)

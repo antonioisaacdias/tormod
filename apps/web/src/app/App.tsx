@@ -35,7 +35,7 @@ export function App() {
   // Open the active session's stream; previously-opened streams stay alive so a
   // working session's thinking/tooling isn't lost when you switch away.
   useEffect(() => {
-    if (active) ensure(active.id)
+    if (active) ensure(active.id, active.usage)
   }, [active, ensure])
 
   function openSession(id: string) {

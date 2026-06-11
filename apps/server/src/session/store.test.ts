@@ -39,4 +39,16 @@ describe("SessionStore", () => {
     store.setActivity("s1", "t1");
     expect(store.all()[0]?.lastActivityAt).toBe("t1");
   });
+
+  it("persists and round-trips the usage snapshot", () => {
+    const store = SessionStore.open(":memory:");
+    store.upsert({ id: "s1", title: "uma", status: "live", createdAt: "t0", lastActivityAt: "t0" });
+    expect(store.all()[0]?.usage).toBeUndefined();
+
+    store.setUsage("s1", { model: "claude-opus-4-8", contextTokens: 45000, contextWindow: 1_000_000 });
+    expect(store.all()[0]?.usage).toEqual({ model: "claude-opus-4-8", contextTokens: 45000, contextWindow: 1_000_000 });
+
+    store.upsert({ id: "s1", title: "v2", status: "closed", createdAt: "t0", lastActivityAt: "t1" });
+    expect(store.all()[0]?.usage).toEqual({ model: "claude-opus-4-8", contextTokens: 45000, contextWindow: 1_000_000 });
+  });
 });

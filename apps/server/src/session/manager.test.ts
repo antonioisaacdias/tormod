@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { SessionManager } from "./manager.js";
 import { FakeBrainAdapter } from "../brain/fake.js";
 import { Audit } from "../audit/audit.js";
+import { SessionStore } from "./store.js";
 import { SettingsStore } from "../settings/store.js";
 import type { ServerEvent } from "./events.js";
 
@@ -90,6 +91,36 @@ describe("SessionManager — lifecycle", () => {
     await mgr.send(s.id, "hi");
     const after = mgr.list().find((x) => x.id === s.id)!.lastActivityAt;
     expect(after >= created!).toBe(true);
+  });
+
+  it("accumulates usage from brain events into the session meta and store", async () => {
+    const audit = Audit.open(":memory:");
+    const store = SessionStore.open(":memory:");
+    const fake = new FakeBrainAdapter();
+    const mgr = new SessionManager(fake, audit, store);
+    const s = await mgr.createSession({ title: "u" });
+    fake.script([
+      { type: "usage", model: "claude-opus-4-8" },
+      { type: "usage", model: "claude-opus-4-8", contextTokens: 45000, contextWindow: 1_000_000 },
+      { type: "result", ok: true },
+    ]);
+    await mgr.send(s.id, "hi");
+    const expected = { model: "claude-opus-4-8", contextTokens: 45000, contextWindow: 1_000_000 };
+    expect(mgr.list().find((x) => x.id === s.id)!.usage).toEqual(expected);
+    expect(store.all().find((x) => x.id === s.id)!.usage).toEqual(expected);
+  });
+
+  it("rehydrates the usage snapshot from the store on boot", async () => {
+    const audit = Audit.open(":memory:");
+    const store = SessionStore.open(":memory:");
+    store.upsert({ id: "s1", title: "u", status: "live", createdAt: "t0", lastActivityAt: "t0" });
+    store.setUsage("s1", { model: "claude-opus-4-8", contextTokens: 1234, contextWindow: 1_000_000 });
+    const mgr = new SessionManager(new FakeBrainAdapter(), audit, store);
+    expect(mgr.list().find((x) => x.id === "s1")!.usage).toEqual({
+      model: "claude-opus-4-8",
+      contextTokens: 1234,
+      contextWindow: 1_000_000,
+    });
   });
 
   it("applies default model/effort from settings on create", async () => {

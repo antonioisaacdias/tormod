@@ -1,5 +1,14 @@
 import Database from "better-sqlite3";
 
+/** Last-known usage of a session, persisted so the infoline shows it on open. */
+export interface UsageSnapshot {
+  model?: string;
+  contextTokens?: number;
+  contextWindow?: number;
+  fiveHourPct?: number;
+  sevenDayPct?: number;
+}
+
 export interface StoredSession {
   id: string;
   title: string;
@@ -8,6 +17,7 @@ export interface StoredSession {
   status: "live" | "closed";
   createdAt: string;
   lastActivityAt: string;
+  usage?: UsageSnapshot;
 }
 
 interface Row {
@@ -18,6 +28,7 @@ interface Row {
   status: string;
   created_at: string;
   last_activity_at: string | null;
+  usage: string | null;
 }
 
 /**
@@ -39,9 +50,12 @@ export class SessionStore {
         claude_id TEXT,
         status TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        last_activity_at TEXT
+        last_activity_at TEXT,
+        usage TEXT
       );
     `);
+    const cols = db.prepare(`PRAGMA table_info(sessions)`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === "usage")) db.exec(`ALTER TABLE sessions ADD COLUMN usage TEXT`);
     return new SessionStore(db);
   }
 
@@ -70,6 +84,10 @@ export class SessionStore {
     this.db.prepare(`UPDATE sessions SET claude_id = ? WHERE id = ?`).run(claudeId, id);
   }
 
+  setUsage(id: string, usage: UsageSnapshot): void {
+    this.db.prepare(`UPDATE sessions SET usage = ? WHERE id = ?`).run(JSON.stringify(usage), id);
+  }
+
   setStatus(id: string, status: "live" | "closed"): void {
     this.db.prepare(`UPDATE sessions SET status = ? WHERE id = ?`).run(status, id);
   }
@@ -80,7 +98,7 @@ export class SessionStore {
 
   all(): StoredSession[] {
     const rows = this.db
-      .prepare(`SELECT id, title, cwd, claude_id, status, created_at, last_activity_at FROM sessions ORDER BY created_at`)
+      .prepare(`SELECT id, title, cwd, claude_id, status, created_at, last_activity_at, usage FROM sessions ORDER BY created_at`)
       .all() as Row[];
     return rows.map((r) => ({
       id: r.id,
@@ -90,6 +108,16 @@ export class SessionStore {
       status: r.status === "closed" ? "closed" : "live",
       createdAt: r.created_at,
       lastActivityAt: r.last_activity_at ?? r.created_at,
+      ...(r.usage !== null ? { usage: parseUsage(r.usage) } : {}),
     }));
+  }
+}
+
+function parseUsage(raw: string): UsageSnapshot {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return typeof parsed === "object" && parsed !== null ? (parsed as UsageSnapshot) : {};
+  } catch {
+    return {};
   }
 }

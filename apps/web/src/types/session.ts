@@ -1,3 +1,5 @@
+import type { UsageSnapshot } from '@/lib/serverTypes'
+
 export type SessionStatus = 'waiting' | 'working' | 'idle' | 'closed'
 
 export interface Session {
@@ -9,4 +11,5 @@ export interface Session {
   snippet: string
   status: SessionStatus
   live: boolean
+  usage?: UsageSnapshot
 }

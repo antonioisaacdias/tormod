@@ -1,7 +1,7 @@
 import type { BrainAdapter, BrainEvent, HistoryItem, PermissionResponse } from "../brain/adapter.js";
 import { classifyTool } from "../permission/policy.js";
 import { Audit } from "../audit/audit.js";
-import type { SessionStore } from "./store.js";
+import type { SessionStore, UsageSnapshot } from "./store.js";
 import type { GlobalEvent, ServerEvent, SessionActivity } from "./events.js";
 import { DEFAULTS, type Settings, type SettingsStore } from "../settings/store.js";
 
@@ -20,6 +20,8 @@ export interface SessionMeta {
   lastActivityAt: string;
   /** Live activity while the session is live (drives the sidebar status dot). */
   activity?: "idle" | "working" | "waiting";
+  /** Last-known usage (model/context/limits), so the infoline shows it on open. */
+  usage?: UsageSnapshot;
 }
 
 type Subscriber = (event: ServerEvent) => void;
@@ -76,6 +78,7 @@ export class SessionManager {
         ...(row.cwd ? { cwd: row.cwd } : {}),
         createdAt: row.createdAt,
         lastActivityAt: row.lastActivityAt,
+        ...(row.usage ? { usage: row.usage } : {}),
       };
       this.sessions.set(row.id, meta);
       if (row.status !== "closed") store.setStatus(row.id, "closed");
@@ -216,10 +219,27 @@ export class SessionManager {
 
   private onBrainEvent(sessionId: string, event: BrainEvent): void {
     this.emit(sessionId, event);
+    if (event.type === "usage") {
+      this.mergeUsage(sessionId, event);
+      return;
+    }
     if (event.type === "result" || event.type === "error") this.setActivity(sessionId, "idle");
     else if (event.type === "text" || event.type === "thinking" || event.type === "tool_use" || event.type === "tool_result") {
       this.setActivity(sessionId, "working");
     }
+  }
+
+  private mergeUsage(id: string, event: BrainEvent & { type: "usage" }): void {
+    const meta = this.sessions.get(id);
+    if (!meta) return;
+    const snap: UsageSnapshot = { ...(meta.usage ?? {}) };
+    if (event.model !== undefined) snap.model = event.model;
+    if (event.contextTokens !== undefined) snap.contextTokens = event.contextTokens;
+    if (event.contextWindow !== undefined) snap.contextWindow = event.contextWindow;
+    if (event.fiveHourPct !== undefined) snap.fiveHourPct = event.fiveHourPct;
+    if (event.sevenDayPct !== undefined) snap.sevenDayPct = event.sevenDayPct;
+    meta.usage = snap;
+    this.store?.setUsage(id, snap);
   }
 
   async sweepIdle(): Promise<void> {

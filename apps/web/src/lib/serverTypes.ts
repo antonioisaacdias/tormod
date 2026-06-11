@@ -17,6 +17,15 @@ export interface SessionMeta {
   createdAt: string
   lastActivityAt?: string
   activity?: 'idle' | 'working' | 'waiting'
+  usage?: UsageSnapshot
+}
+
+export interface UsageSnapshot {
+  model?: string
+  contextTokens?: number
+  contextWindow?: number
+  fiveHourPct?: number
+  sevenDayPct?: number
 }
 
 export type SessionActivity = 'idle' | 'working' | 'waiting' | 'closed'
