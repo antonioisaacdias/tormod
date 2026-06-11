@@ -18,6 +18,7 @@ export interface StoredSession {
   createdAt: string;
   lastActivityAt: string;
   usage?: UsageSnapshot;
+  permissionMode?: "default" | "auto";
 }
 
 interface Row {
@@ -29,6 +30,7 @@ interface Row {
   created_at: string;
   last_activity_at: string | null;
   usage: string | null;
+  permission_mode: string | null;
 }
 
 /**
@@ -51,20 +53,22 @@ export class SessionStore {
         status TEXT NOT NULL,
         created_at TEXT NOT NULL,
         last_activity_at TEXT,
-        usage TEXT
+        usage TEXT,
+        permission_mode TEXT
       );
     `);
     const cols = db.prepare(`PRAGMA table_info(sessions)`).all() as { name: string }[];
     if (!cols.some((c) => c.name === "usage")) db.exec(`ALTER TABLE sessions ADD COLUMN usage TEXT`);
+    if (!cols.some((c) => c.name === "permission_mode")) db.exec(`ALTER TABLE sessions ADD COLUMN permission_mode TEXT`);
     return new SessionStore(db);
   }
 
   upsert(s: StoredSession): void {
     this.db
       .prepare(
-        `INSERT INTO sessions (id, title, cwd, status, created_at, last_activity_at)
-         VALUES (@id, @title, @cwd, @status, @createdAt, @lastActivityAt)
-         ON CONFLICT(id) DO UPDATE SET title = @title, cwd = @cwd, status = @status, last_activity_at = @lastActivityAt`,
+        `INSERT INTO sessions (id, title, cwd, status, created_at, last_activity_at, permission_mode)
+         VALUES (@id, @title, @cwd, @status, @createdAt, @lastActivityAt, @permissionMode)
+         ON CONFLICT(id) DO UPDATE SET title = @title, cwd = @cwd, status = @status, last_activity_at = @lastActivityAt, permission_mode = @permissionMode`,
       )
       .run({
         id: s.id,
@@ -73,7 +77,12 @@ export class SessionStore {
         status: s.status,
         createdAt: s.createdAt,
         lastActivityAt: s.lastActivityAt,
+        permissionMode: s.permissionMode ?? null,
       });
+  }
+
+  setPermissionMode(id: string, mode: "default" | "auto"): void {
+    this.db.prepare(`UPDATE sessions SET permission_mode = ? WHERE id = ?`).run(mode, id);
   }
 
   setActivity(id: string, lastActivityAt: string): void {
@@ -98,7 +107,7 @@ export class SessionStore {
 
   all(): StoredSession[] {
     const rows = this.db
-      .prepare(`SELECT id, title, cwd, claude_id, status, created_at, last_activity_at, usage FROM sessions ORDER BY created_at`)
+      .prepare(`SELECT id, title, cwd, claude_id, status, created_at, last_activity_at, usage, permission_mode FROM sessions ORDER BY created_at`)
       .all() as Row[];
     return rows.map((r) => ({
       id: r.id,
@@ -109,6 +118,7 @@ export class SessionStore {
       createdAt: r.created_at,
       lastActivityAt: r.last_activity_at ?? r.created_at,
       ...(r.usage !== null ? { usage: parseUsage(r.usage) } : {}),
+      ...(r.permission_mode === "auto" || r.permission_mode === "default" ? { permissionMode: r.permission_mode } : {}),
     }));
   }
 }

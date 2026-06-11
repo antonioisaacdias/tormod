@@ -7,7 +7,11 @@ export interface Settings {
   defaultEffort: "auto" | "low" | "medium" | "high" | "xhigh" | "max";
   /** Free-text context appended to every new session's system prompt (env, VPN, "no localhost", etc.). */
   systemPrompt: string;
+  /** Initial permission mode for new sessions: 'default' asks on the approve tier, 'auto' auto-approves it. */
+  defaultPermissionMode: PermissionMode;
 }
+
+export type PermissionMode = "default" | "auto";
 
 export const DEFAULTS: Settings = {
   maxLiveSessions: 5,
@@ -15,12 +19,14 @@ export const DEFAULTS: Settings = {
   defaultModel: "auto",
   defaultEffort: "auto",
   systemPrompt: "",
+  defaultPermissionMode: "default",
 };
 
 const MAX_PROMPT = 20000;
 
 const MODELS = new Set(["auto", "opus", "sonnet", "haiku"]);
 const EFFORTS = new Set(["auto", "low", "medium", "high", "xhigh", "max"]);
+const PERMISSION_MODES = new Set(["default", "auto"]);
 
 function clamp(n: unknown, min: number, max: number, fallback: number): number {
   const v = typeof n === "number" && Number.isFinite(n) ? n : fallback;
@@ -38,6 +44,9 @@ function normalize(raw: Partial<Settings>): Settings {
       ? (raw.defaultEffort as Settings["defaultEffort"])
       : DEFAULTS.defaultEffort,
     systemPrompt: typeof raw.systemPrompt === "string" ? raw.systemPrompt.slice(0, MAX_PROMPT) : DEFAULTS.systemPrompt,
+    defaultPermissionMode: PERMISSION_MODES.has(raw.defaultPermissionMode as string)
+      ? (raw.defaultPermissionMode as PermissionMode)
+      : DEFAULTS.defaultPermissionMode,
   };
 }
 

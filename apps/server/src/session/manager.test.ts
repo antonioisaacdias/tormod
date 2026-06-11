@@ -248,3 +248,39 @@ describe("SessionManager — approval bridge", () => {
     expect(got.find((e) => e.type === "tool_result")).toMatchObject({ ok: false });
   });
 });
+
+describe("SessionManager — free permission mode", () => {
+  it("auto mode approves the approve tier without a card, still auditing as mutate", async () => {
+    const { fake, mgr, audit } = setup();
+    const s = await mgr.createSession({});
+    mgr.setPermissionMode(s.id, "auto");
+    const got: ServerEvent[] = [];
+    mgr.subscribe(s.id, (e) => got.push(e));
+    fake.script([{ type: "tool_use", id: "t1", request: { tool: "Edit", input: { file_path: "/x" } } }]);
+    await mgr.send(s.id, "edit");
+    expect(got.some((e) => e.type === "permission_request")).toBe(false);
+    expect(got.find((e) => e.type === "tool_result")).toMatchObject({ ok: true });
+    expect(audit.query({ tier: "mutate" }).length).toBe(1);
+  });
+
+  it("auto mode still denies destructive commands without a card", async () => {
+    const { fake, mgr } = setup();
+    const s = await mgr.createSession({});
+    mgr.setPermissionMode(s.id, "auto");
+    const got: ServerEvent[] = [];
+    mgr.subscribe(s.id, (e) => got.push(e));
+    fake.script([{ type: "tool_use", id: "t1", request: { tool: "Bash", input: { command: "rm -rf /" } } }]);
+    await mgr.send(s.id, "go");
+    expect(got.some((e) => e.type === "permission_request")).toBe(false);
+    expect(got.find((e) => e.type === "tool_result")).toMatchObject({ ok: false });
+  });
+
+  it("new sessions inherit defaultPermissionMode from settings", async () => {
+    const audit = Audit.open(":memory:");
+    const settings = SettingsStore.open(":memory:");
+    settings.save({ defaultPermissionMode: "auto" });
+    const mgr = new SessionManager(new FakeBrainAdapter(), audit, undefined, settings);
+    const s = await mgr.createSession({});
+    expect(mgr.list().find((x) => x.id === s.id)!.permissionMode).toBe("auto");
+  });
+});

@@ -3,7 +3,7 @@ import { classifyTool } from "../permission/policy.js";
 import { Audit } from "../audit/audit.js";
 import type { SessionStore, UsageSnapshot } from "./store.js";
 import type { GlobalEvent, ServerEvent, SessionActivity } from "./events.js";
-import { DEFAULTS, type Settings, type SettingsStore } from "../settings/store.js";
+import { DEFAULTS, type PermissionMode, type Settings, type SettingsStore } from "../settings/store.js";
 
 const MODEL_IDS: Record<"opus" | "sonnet" | "haiku", string> = {
   opus: "claude-opus-4-8",
@@ -22,6 +22,8 @@ export interface SessionMeta {
   activity?: "idle" | "working" | "waiting";
   /** Last-known usage (model/context/limits), so the infoline shows it on open. */
   usage?: UsageSnapshot;
+  /** 'default' parks the approve tier on a card; 'auto' auto-approves it (deny stays). */
+  permissionMode: PermissionMode;
 }
 
 type Subscriber = (event: ServerEvent) => void;
@@ -79,6 +81,7 @@ export class SessionManager {
         createdAt: row.createdAt,
         lastActivityAt: row.lastActivityAt,
         ...(row.usage ? { usage: row.usage } : {}),
+        permissionMode: row.permissionMode ?? "default",
       };
       this.sessions.set(row.id, meta);
       if (row.status !== "closed") store.setStatus(row.id, "closed");
@@ -109,6 +112,7 @@ export class SessionManager {
       createdAt: now,
       lastActivityAt: now,
       activity: "idle",
+      permissionMode: cfg.defaultPermissionMode,
     };
     this.sessions.set(id, meta);
     this.store?.upsert({
@@ -118,6 +122,7 @@ export class SessionManager {
       status: "live",
       createdAt: meta.createdAt,
       lastActivityAt: meta.lastActivityAt,
+      permissionMode: meta.permissionMode,
     });
     await this.enforceCap(id);
     return meta;
@@ -181,6 +186,13 @@ export class SessionManager {
 
   async interrupt(id: string): Promise<void> {
     await this.adapter.interrupt(id);
+  }
+
+  setPermissionMode(id: string, mode: PermissionMode): void {
+    const meta = this.sessions.get(id);
+    if (!meta || meta.permissionMode === mode) return;
+    meta.permissionMode = mode;
+    this.store?.setPermissionMode(id, mode);
   }
 
   async close(id: string): Promise<void> {
@@ -276,6 +288,10 @@ export class SessionManager {
     if (decision.tier === "deny") {
       this.audit.record({ sessionId, ...(node ? { node } : {}), tool: request.tool, ...(command ? { command } : {}), tier: "destructive", approved: 2 });
       return Promise.resolve({ allow: false, message: decision.reason });
+    }
+    if (this.sessions.get(sessionId)?.permissionMode === "auto") {
+      this.audit.record({ sessionId, ...(node ? { node } : {}), tool: request.tool, ...(command ? { command } : {}), tier: "mutate", approved: 1 });
+      return Promise.resolve({ allow: true });
     }
     this.emit(sessionId, {
       type: "permission_request",

@@ -65,6 +65,13 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono {
     return c.json({ interrupted: true });
   });
 
+  app.put("/api/sessions/:id/permission-mode", async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { mode?: unknown };
+    if (body.mode !== "default" && body.mode !== "auto") return c.json({ error: "invalid mode" }, 400);
+    manager.setPermissionMode(c.req.param("id"), body.mode);
+    return c.json({ mode: body.mode });
+  });
+
   app.post("/api/sessions/:id/close", async (c) => {
     await manager.close(c.req.param("id"));
     return c.json({ closed: true });

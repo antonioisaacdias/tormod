@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { closeSession, createSession, deleteSession, listSessions, streamAll, UnauthorizedError } from '@/lib/api'
+import { closeSession, createSession, deleteSession, listSessions, setPermissionMode, streamAll, UnauthorizedError } from '@/lib/api'
 import { sessionFromMeta } from '@/lib/sessionFromMeta'
 import type { Session } from '@/types/session'
+import type { PermissionMode } from '@/lib/serverTypes'
 
 export function useSessions() {
   const [sessions, setSessions] = useState<Session[]>([])
@@ -68,5 +69,10 @@ export function useSessions() {
     [refresh],
   )
 
-  return { sessions, unauthorized, loading, refresh, create, close, remove }
+  const setMode = useCallback(async (id: string, mode: PermissionMode) => {
+    setSessions((current) => current.map((s) => (s.id === id ? { ...s, permissionMode: mode } : s)))
+    await setPermissionMode(id, mode).catch((err) => console.error('setPermissionMode', err))
+  }, [])
+
+  return { sessions, unauthorized, loading, refresh, create, close, remove, setMode }
 }

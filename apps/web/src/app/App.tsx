@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/Button'
 import type { SessionAction } from '@/components/sessions/SessionActionsMenu'
 
 export function App() {
-  const { sessions, unauthorized, loading, refresh, create, close, remove } = useSessions()
+  const { sessions, unauthorized, loading, refresh, create, close, remove, setMode } = useSessions()
   const [activeId, setActiveId] = usePersistentState<string | null>('tormod:activeId', null)
   const [mobileChat, setMobileChat] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -114,6 +114,7 @@ export function App() {
             onSend={onSend}
             onStop={() => void threads.interrupt(active.id)}
             onDecide={(toolUseId, decision) => void threads.decide(active.id, toolUseId, decision)}
+            onSetPermissionMode={(mode) => void setMode(active.id, mode)}
             onBack={() => setMobileChat(false)}
           />
         ) : (

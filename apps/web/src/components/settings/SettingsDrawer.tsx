@@ -104,6 +104,21 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             </label>
 
             <label className="flex flex-col gap-1.5">
+              <span className="font-medium">Aprovação padrão</span>
+              <select
+                value={settings.defaultPermissionMode}
+                onChange={(e) => save({ defaultPermissionMode: e.target.value as Settings['defaultPermissionMode'] })}
+                className="rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-arc/50"
+              >
+                <option value="default">Sempre perguntar</option>
+                <option value="auto">Modo livre (auto-aprovar)</option>
+              </select>
+              <span className="text-[11px] text-faint">
+                No modo livre, ações que pediriam aprovação são executadas direto; comandos destrutivos continuam bloqueados. Vale para sessões novas (cada sessão pode sobrescrever).
+              </span>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
               <span className="font-medium">Contexto do ambiente</span>
               <textarea
                 rows={5}

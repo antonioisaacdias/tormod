@@ -1,4 +1,4 @@
-import type { GlobalEvent, HistoryItem, ServerEvent, SessionMeta, Settings } from './serverTypes'
+import type { GlobalEvent, HistoryItem, PermissionMode, ServerEvent, SessionMeta, Settings } from './serverTypes'
 
 const TOKEN_KEY = 'tormod:token'
 
@@ -60,6 +60,16 @@ export async function interruptSession(id: string): Promise<void> {
 
 export async function closeSession(id: string): Promise<void> {
   await expectOk(await fetch(`/api/sessions/${id}/close`, { method: 'POST', headers: authHeaders() }))
+}
+
+export async function setPermissionMode(id: string, mode: PermissionMode): Promise<void> {
+  await expectOk(
+    await fetch(`/api/sessions/${id}/permission-mode`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ mode }),
+    }),
+  )
 }
 
 export async function deleteSession(id: string): Promise<void> {

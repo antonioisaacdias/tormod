@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { ChevronLeft, Cpu } from 'lucide-react'
+import { ChevronLeft, Cpu, ShieldCheck, Zap } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import type { PermissionMode } from '@/lib/serverTypes'
 import { toneText } from '@/lib/toneClass'
 import { statusPresentation } from '@/lib/sessionStatus'
 import { Badge } from '@/components/ui/Badge'
@@ -24,6 +25,7 @@ interface ChatViewProps {
   onSend: (text: string) => void
   onStop: () => void
   onDecide: (toolUseId: string, decision: ApprovalDecision) => void
+  onSetPermissionMode: (mode: PermissionMode) => void
   onBack: () => void
 }
 
@@ -38,8 +40,10 @@ export function ChatView({
   onSend,
   onStop,
   onDecide,
+  onSetPermissionMode,
   onBack,
 }: ChatViewProps) {
+  const free = session.permissionMode === 'auto'
   const status = statusPresentation(working ? 'working' : session.status)
   const scrollRef = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -77,6 +81,18 @@ export function ChatView({
             {session.id} · {session.node} · {session.directory}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => onSetPermissionMode(free ? 'default' : 'auto')}
+          title={free ? 'Modo livre: ações são auto-aprovadas (destrutivos continuam bloqueados). Clique para voltar a pedir aprovação.' : 'Aprovação manual: cada ação pede confirmação. Clique para ativar o modo livre.'}
+          className={cn(
+            'inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
+            free ? 'border-danger/40 bg-danger/10 text-danger' : 'border-border text-faint hover:text-frost',
+          )}
+        >
+          {free ? <Zap className="size-3" /> : <ShieldCheck className="size-3" />}
+          {free ? 'modo livre' : 'aprovar ações'}
+        </button>
         <Badge tone="arc" size="md" className="hidden shrink-0 sm:inline-flex">
           <Cpu className="size-3" /> cérebro: Claude Code
         </Badge>

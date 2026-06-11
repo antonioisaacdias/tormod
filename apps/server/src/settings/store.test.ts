@@ -26,4 +26,11 @@ describe("SettingsStore", () => {
     expect(s.save({ defaultModel: "bogus" as never }).defaultModel).toBe(DEFAULTS.defaultModel);
     expect(s.save({ defaultEffort: "bogus" as never }).defaultEffort).toBe(DEFAULTS.defaultEffort);
   });
+
+  it("defaults permission mode to 'default' and accepts 'auto', rejecting others", () => {
+    const s = SettingsStore.open(":memory:");
+    expect(s.get().defaultPermissionMode).toBe("default");
+    expect(s.save({ defaultPermissionMode: "auto" }).defaultPermissionMode).toBe("auto");
+    expect(s.save({ defaultPermissionMode: "bogus" as never }).defaultPermissionMode).toBe(DEFAULTS.defaultPermissionMode);
+  });
 });

@@ -51,4 +51,12 @@ describe("SessionStore", () => {
     store.upsert({ id: "s1", title: "v2", status: "closed", createdAt: "t0", lastActivityAt: "t1" });
     expect(store.all()[0]?.usage).toEqual({ model: "claude-opus-4-8", contextTokens: 45000, contextWindow: 1_000_000 });
   });
+
+  it("persists and round-trips the permission mode", () => {
+    const store = SessionStore.open(":memory:");
+    store.upsert({ id: "s1", title: "uma", status: "live", createdAt: "t0", lastActivityAt: "t0", permissionMode: "auto" });
+    expect(store.all()[0]?.permissionMode).toBe("auto");
+    store.setPermissionMode("s1", "default");
+    expect(store.all()[0]?.permissionMode).toBe("default");
+  });
 });

@@ -18,7 +18,10 @@ export interface SessionMeta {
   lastActivityAt?: string
   activity?: 'idle' | 'working' | 'waiting'
   usage?: UsageSnapshot
+  permissionMode: PermissionMode
 }
+
+export type PermissionMode = 'default' | 'auto'
 
 export interface UsageSnapshot {
   model?: string
@@ -57,4 +60,5 @@ export interface Settings {
   defaultModel: 'auto' | 'opus' | 'sonnet' | 'haiku'
   defaultEffort: 'auto' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
   systemPrompt: string
+  defaultPermissionMode: PermissionMode
 }

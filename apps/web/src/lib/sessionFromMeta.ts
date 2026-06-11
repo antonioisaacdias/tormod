@@ -30,5 +30,6 @@ export function sessionFromMeta(meta: SessionMeta): Session {
     status,
     live: meta.status === 'live',
     ...(meta.usage ? { usage: meta.usage } : {}),
+    permissionMode: meta.permissionMode ?? 'default',
   }
 }

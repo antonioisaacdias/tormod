@@ -1,4 +1,4 @@
-import type { UsageSnapshot } from '@/lib/serverTypes'
+import type { PermissionMode, UsageSnapshot } from '@/lib/serverTypes'
 
 export type SessionStatus = 'waiting' | 'working' | 'idle' | 'closed'
 
@@ -12,4 +12,5 @@ export interface Session {
   status: SessionStatus
   live: boolean
   usage?: UsageSnapshot
+  permissionMode: PermissionMode
 }
