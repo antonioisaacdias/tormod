@@ -235,6 +235,19 @@ describe("SessionManager — approval bridge", () => {
     expect(audit.query({ tier: "mutate" }).length).toBe(1);
   });
 
+  it("replays a pending approval to a subscriber that connects after the request (reload)", async () => {
+    const { fake, mgr } = setup();
+    const s = await mgr.createSession({});
+    fake.script([{ type: "tool_use", id: "t1", request: { tool: "Edit", input: { file_path: "/x" } } }]);
+    const sending = mgr.send(s.id, "edit");
+    await new Promise((r) => setTimeout(r, 0));
+    const reloaded: ServerEvent[] = [];
+    mgr.subscribe(s.id, (e) => reloaded.push(e));
+    expect(reloaded.find((e) => e.type === "permission_request")).toMatchObject({ toolUseId: "t1" });
+    mgr.resolveDecision("t1", true);
+    await sending;
+  });
+
   it("resolveDecision(false) denies the parked request", async () => {
     const { fake, mgr } = setup();
     const s = await mgr.createSession({});

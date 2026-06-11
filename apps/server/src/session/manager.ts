@@ -29,6 +29,9 @@ export interface SessionMeta {
 type Subscriber = (event: ServerEvent) => void;
 
 interface Pending {
+  sessionId: string;
+  /** The original permission_request event, replayed to subscribers that connect later (e.g. after a reload). */
+  event: ServerEvent;
   resolve: (resp: PermissionResponse) => void;
 }
 
@@ -214,6 +217,7 @@ export class SessionManager {
     let set = this.subscribers.get(id);
     if (!set) { set = new Set(); this.subscribers.set(id, set); }
     set.add(fn);
+    for (const p of this.pending.values()) if (p.sessionId === id) fn(p.event);
     return () => set!.delete(fn);
   }
 
@@ -293,16 +297,19 @@ export class SessionManager {
       this.audit.record({ sessionId, ...(node ? { node } : {}), tool: request.tool, ...(command ? { command } : {}), tier: "mutate", approved: 1 });
       return Promise.resolve({ allow: true });
     }
-    this.emit(sessionId, {
+    const requestEvent: ServerEvent = {
       type: "permission_request",
       toolUseId,
       request,
       tier: decision.tier,
       ...(decision.literal ? { literal: decision.literal } : {}),
-    });
+    };
+    this.emit(sessionId, requestEvent);
     this.setActivity(sessionId, "waiting");
     return new Promise<PermissionResponse>((resolve) => {
       this.pending.set(toolUseId, {
+        sessionId,
+        event: requestEvent,
         resolve: (resp) => {
           this.audit.record({ sessionId, ...(node ? { node } : {}), tool: request.tool, ...(command ? { command } : {}), tier: "mutate", approved: resp.allow ? 1 : 2 });
           this.emit(sessionId, { type: "permission_resolved", toolUseId, allow: resp.allow });
