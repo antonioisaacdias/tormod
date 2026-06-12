@@ -37,10 +37,11 @@ const auth = {
   config: authConfig,
 };
 
-const app = createApp(manager, { auth, settings });
+const app = createApp(manager, { auth, settings, webDist: process.env.TORMOD_WEB_DIST });
 
-serve({ fetch: app.fetch, port, hostname: "127.0.0.1" }, (info) => {
-  console.error(`Tormod server listening on http://127.0.0.1:${info.port}`);
+const host = process.env.HOST ?? "127.0.0.1";
+serve({ fetch: app.fetch, port, hostname: host }, (info) => {
+  console.error(`Tormod server listening on http://${host}:${info.port}`);
 });
 
 let shuttingDown = false;
