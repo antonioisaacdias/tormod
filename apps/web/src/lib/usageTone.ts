@@ -1,6 +1,6 @@
-import type { Tone } from '@/types/tone'
+export type MeterTone = 'arc' | 'approve' | 'danger'
 
-export function usageTone(percentage: number): Tone {
+export function usageTone(percentage: number): MeterTone {
   if (percentage >= 90) {
     return 'danger'
   }
