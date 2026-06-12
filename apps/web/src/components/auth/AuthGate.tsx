@@ -1,10 +1,35 @@
 import { useEffect, useState } from 'react'
+import { Brand } from '@/components/Brand'
 import { Button } from '@/components/ui/Button'
 import { getStatus, register, login, AuthError } from '@/lib/auth'
 import type { AuthStatus } from '@/lib/serverTypes'
 
-const input =
+const inputClass =
   'rounded-xl border border-border bg-surface px-4 py-3 text-sm text-frost outline-none focus:border-arc/50'
+
+function Field({ label, id, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-xs font-medium text-faint">
+        {label}
+      </label>
+      <input id={id} className={inputClass} {...props} />
+    </div>
+  )
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid h-full place-items-center bg-ink px-6 text-frost">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-deep p-7 shadow-xl shadow-black/30">
+        <div className="mb-6 flex justify-center">
+          <Brand />
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export function AuthGate({ onAuthed }: { onAuthed: () => void }) {
   const [status, setStatus] = useState<AuthStatus | null>(null)
@@ -44,17 +69,22 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
   const valid = username.trim().length >= 3 && email.includes('@') && password.length >= 8
 
   return (
-    <div className="grid h-full place-items-center bg-ink text-frost">
-      <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-3 px-6">
-        <h1 className="text-lg font-bold">Tormod — primeiro acesso</h1>
-        <p className="text-sm text-faint">Crie o usuário que vai operar o homelab.</p>
-        <input className={input} placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
-        <input className={input} type="email" placeholder="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className={input} type="password" placeholder="senha (mín. 8)" value={password} onChange={(e) => setPassword(e.target.value)} />
+    <Card>
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-base font-bold text-frost">Primeiro acesso</h1>
+          <p className="text-sm text-faint">Crie o usuário que vai operar o homelab.</p>
+        </div>
+        <Field label="Usuário" id="reg-username" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+        <Field label="Email" id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Field label="Senha" id="reg-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <p className="-mt-1 text-xs text-mist">Mínimo de 8 caracteres.</p>
         {error && <p className="text-sm text-red-400">{error}</p>}
-        <Button type="submit" disabled={!valid || busy}>{busy ? 'Criando…' : 'Criar conta'}</Button>
+        <Button type="submit" disabled={!valid || busy}>
+          {busy ? 'Criando…' : 'Criar conta'}
+        </Button>
       </form>
-    </div>
+    </Card>
   )
 }
 
@@ -82,26 +112,36 @@ function LoginForm({ status, onDone }: { status: AuthStatus; onDone: () => void 
     }
   }
 
+  if (blocked) {
+    return (
+      <Card>
+        <p className="text-sm text-amber-400">
+          2FA não configurado. Conecte pela LAN/VPN para configurar o segundo fator antes de acessar externamente.
+        </p>
+      </Card>
+    )
+  }
+
   return (
-    <div className="grid h-full place-items-center bg-ink text-frost">
-      <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-3 px-6">
-        <h1 className="text-lg font-bold">Tormod</h1>
-        {blocked ? (
-          <p className="text-sm text-amber-400">
-            2FA não configurado. Conecte pela LAN/VPN para configurar o segundo fator antes de acessar externamente.
-          </p>
-        ) : (
-          <>
-            <input className={input} placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
-            <input className={input} type="password" placeholder="senha" value={password} onChange={(e) => setPassword(e.target.value)} />
-            {needsTotp && (
-              <input className={input} inputMode="numeric" placeholder="código 2FA (6 dígitos)" value={totp} onChange={(e) => setTotp(e.target.value)} />
-            )}
-            {error && <p className="text-sm text-red-400">{error}</p>}
-            <Button type="submit" disabled={busy || !username || !password}>{busy ? 'Entrando…' : 'Entrar'}</Button>
-          </>
+    <Card>
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <Field label="Usuário" id="login-username" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+        <Field label="Senha" id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        {needsTotp && (
+          <Field
+            label="Código 2FA"
+            id="login-totp"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={totp}
+            onChange={(e) => setTotp(e.target.value)}
+          />
         )}
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <Button type="submit" disabled={busy || !username || !password}>
+          {busy ? 'Entrando…' : 'Entrar'}
+        </Button>
       </form>
-    </div>
+    </Card>
   )
 }
