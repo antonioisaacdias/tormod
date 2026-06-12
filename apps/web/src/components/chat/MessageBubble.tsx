@@ -21,7 +21,7 @@ export function MessageBubble({ author, segments }: MessageBubbleProps) {
       )}
       <div
         className={cn(
-          'max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
+          'max-w-[82%] break-words rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
           isUser
             ? 'rounded-br-[5px] bg-arc font-medium text-ink'
             : 'rounded-bl-[5px] border border-border bg-surface text-frost/90',

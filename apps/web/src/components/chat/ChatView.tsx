@@ -66,7 +66,7 @@ export function ChatView({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-ink">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
       <header className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3.5 lg:px-6">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="lg:hidden">
           <ChevronLeft className="size-5" />
@@ -77,7 +77,7 @@ export function ChatView({
             <span className="truncate text-base font-bold text-frost">{session.title}</span>
             <span className={cn('text-[11px] font-medium', toneText[status.tone])}>{status.label}</span>
           </div>
-          <div className="mt-0.5 font-mono text-[11px] text-faint">
+          <div className="mt-0.5 truncate font-mono text-[11px] text-faint">
             {session.id} · {session.node} · {session.directory}
           </div>
         </div>
@@ -101,7 +101,7 @@ export function ChatView({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-4 py-5 lg:px-6"
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-none px-4 py-5 lg:px-6"
       >
         <Thread items={items} decisions={decisions} working={working} onDecide={onDecide} />
       </div>
