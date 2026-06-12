@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useSettings } from '@/hooks/useSettings'
 import { Button } from '@/components/ui/Button'
+import { TwoFactorSection } from './TwoFactorSection'
 import type { Settings } from '@/lib/serverTypes'
 
 const MODELS: Settings['defaultModel'][] = ['auto', 'opus', 'sonnet', 'haiku']
@@ -132,6 +133,8 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
                 Texto anexado ao system prompt de toda sessão nova — o cérebro fica ciente do ambiente.
               </span>
             </label>
+
+            <TwoFactorSection />
 
             <span className="text-[11px] text-faint">
               {saving ? 'Salvando…' : 'Modelo, effort e contexto valem para sessões novas.'}
