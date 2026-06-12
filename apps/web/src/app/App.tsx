@@ -7,9 +7,9 @@ import { SettingsDrawer } from '@/components/settings/SettingsDrawer'
 import { usePersistentState } from '@/hooks/usePersistentState'
 import { useSessions } from '@/hooks/useSessions'
 import { useSessionThreads } from '@/hooks/useSessionThreads'
-import { setToken } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/Button'
+import { AuthGate } from '@/components/auth/AuthGate'
 import type { SessionAction } from '@/components/sessions/SessionActionsMenu'
 
 export function App() {
@@ -74,7 +74,7 @@ export function App() {
   }
 
   if (unauthorized) {
-    return <TokenGate onSubmit={async (token) => { setToken(token); await refresh() }} />
+    return <AuthGate onAuthed={() => void refresh()} />
   }
 
   return (
@@ -127,35 +127,6 @@ export function App() {
         )}
       </main>
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-    </div>
-  )
-}
-
-function TokenGate({ onSubmit }: { onSubmit: (token: string) => void }) {
-  const [value, setValue] = useState('')
-  return (
-    <div className="grid h-full place-items-center bg-ink text-frost">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (value.trim()) onSubmit(value.trim())
-        }}
-        className="flex w-full max-w-sm flex-col gap-3 px-6"
-      >
-        <h1 className="text-lg font-bold">Tormod</h1>
-        <p className="text-sm text-faint">Cole o bearer token para conectar ao servidor.</p>
-        <input
-          type="password"
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          placeholder="TORMOD_TOKEN"
-          autoFocus
-          className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-frost outline-none focus:border-arc/50"
-        />
-        <Button type="submit" disabled={!value.trim()}>
-          Conectar
-        </Button>
-      </form>
     </div>
   )
 }
