@@ -19,3 +19,7 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Build cache / stray logs
+.vite/
+*.log
