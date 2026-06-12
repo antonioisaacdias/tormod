@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, LogOut } from 'lucide-react'
 import { useSettings } from '@/hooks/useSettings'
+import { logout } from '@/lib/auth'
 import { Button } from '@/components/ui/Button'
 import { TwoFactorSection } from './TwoFactorSection'
 import type { Settings } from '@/lib/serverTypes'
@@ -29,6 +30,11 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
   if (!open) return null
 
+  async function handleLogout() {
+    await logout()
+    window.location.reload()
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
       <div
@@ -43,7 +49,7 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
         </div>
 
         {unauthorized ? (
-          <p className="text-sm text-danger">Sessão expirada. Recarregue a página e entre com o token novamente.</p>
+          <p className="text-sm text-danger">Sessão expirada. Entre novamente.</p>
         ) : !settings ? (
           <p className="text-sm text-faint">Carregando…</p>
         ) : (
@@ -141,6 +147,13 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             </span>
           </div>
         )}
+
+        <div className="mt-auto border-t border-border pt-4">
+          <Button variant="danger" onClick={handleLogout} className="w-full">
+            <LogOut className="size-4" />
+            Sair
+          </Button>
+        </div>
       </div>
     </div>
   )
