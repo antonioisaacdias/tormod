@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { getConnInfo } from "@hono/node-server/conninfo";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { SessionManager } from "../session/manager.js";
 import type { SettingsStore } from "../settings/store.js";
 import type { AuthContext } from "../auth/context.js";
@@ -10,6 +13,7 @@ import { resolveClientIp } from "../auth/origin.js";
 export interface AppOptions {
   auth: AuthContext;
   settings: SettingsStore;
+  webDist?: string;
 }
 
 type Env = { Variables: { [CLIENT_IP]: string } };
@@ -119,6 +123,13 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono<Env> 
       }
     });
   });
+
+  if (opts.webDist) {
+    const root = opts.webDist;
+    const indexHtml = readFileSync(join(root, "index.html"), "utf8");
+    app.use("/*", serveStatic({ root }));
+    app.get("*", (c) => c.html(indexHtml));
+  }
 
   return app;
 }

@@ -8,6 +8,9 @@ import { UserStore } from "../auth/users.js";
 import { AuthSessionStore } from "../auth/authSessions.js";
 import { Throttle } from "../auth/throttle.js";
 import type { AuthContext } from "../auth/context.js";
+import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 function ctx(): AuthContext {
   return {
@@ -109,6 +112,41 @@ describe("createApp — settings", () => {
       { auth: ctx(), settings },
     );
     const res = await a.request("/api/settings");
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("createApp — static web", () => {
+  function appWithWeb() {
+    const dir = mkdtempSync(join(tmpdir(), "tormod-web-"));
+    writeFileSync(join(dir, "index.html"), "<!doctype html><title>Tormod</title><div id=root></div>");
+    mkdirSync(join(dir, "assets"));
+    writeFileSync(join(dir, "assets", "app.js"), "console.log(1)");
+    const settings = SettingsStore.open(":memory:");
+    const mgr = new SessionManager(new FakeBrainAdapter(), Audit.open(":memory:"), undefined, settings);
+    return createApp(mgr, { auth: ctx(), settings, webDist: dir });
+  }
+
+  it("serves index.html at the root", async () => {
+    const res = await appWithWeb().request("/");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("Tormod");
+  });
+
+  it("serves static assets", async () => {
+    const res = await appWithWeb().request("/assets/app.js");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("console.log");
+  });
+
+  it("falls back to index.html for an unknown client route", async () => {
+    const res = await appWithWeb().request("/some/spa/route");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("Tormod");
+  });
+
+  it("keeps /api gated even with static serving on", async () => {
+    const res = await appWithWeb().request("/api/sessions");
     expect(res.status).toBe(401);
   });
 });
