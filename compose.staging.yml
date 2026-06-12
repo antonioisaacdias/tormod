@@ -1,0 +1,23 @@
+services:
+  tormod-staging:
+    image: tormod-staging:latest
+    container_name: tormod-staging
+    restart: unless-stopped
+    ports:
+      - "8080:8790"
+    user: "1000:1000"
+    environment:
+      HOME: /home/odin
+      TORMOD_BRAIN: claude
+      TORMOD_CWD: /home/odin
+      TORMOD_COOKIE_SECURE: "false"
+      TORMOD_AUDIT: /data/tormod.db
+      TORMOD_TRUSTED_CIDRS: "172.16.0.0/12,192.168.0.0/24,10.0.0.0/24,127.0.0.1/32,::1/128"
+      HOST: 0.0.0.0
+    volumes:
+      - /home/odin/.ssh:/home/odin/.ssh:ro
+      - /home/odin/.claude:/home/odin/.claude:rw
+      - tormod-staging-data:/data
+
+volumes:
+  tormod-staging-data:
