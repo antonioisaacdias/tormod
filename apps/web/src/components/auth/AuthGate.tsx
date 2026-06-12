@@ -1,11 +1,24 @@
 import { useEffect, useState } from 'react'
+import { AlertCircle, AlertTriangle } from 'lucide-react'
 import { Brand } from '@/components/Brand'
 import { Button } from '@/components/ui/Button'
+import { cn } from '@/lib/cn'
 import { getStatus, register, login, AuthError } from '@/lib/auth'
 import type { AuthStatus } from '@/lib/serverTypes'
 
 const inputClass =
   'rounded-xl border border-border bg-surface px-4 py-3 text-sm text-frost outline-none focus:border-arc/50'
+
+function authErrorMessage(err: unknown, mode: 'login' | 'register'): string {
+  const fallback = mode === 'login' ? 'Não foi possível entrar. Tente novamente.' : 'Não foi possível criar a conta.'
+  if (!(err instanceof AuthError)) return fallback
+  if (err.status === 429) return 'Muitas tentativas. Aguarde alguns minutos e tente de novo.'
+  if (err.status === 400) return 'Dados inválidos. Confira usuário (mín. 3), email e senha (mín. 8).'
+  if (mode === 'register' && err.status === 403) return 'Já existe um usuário cadastrado neste Tormod.'
+  if (mode === 'login' && err.status === 401) return 'Usuário ou senha inválidos.'
+  if (mode === 'login' && err.status === 403) return 'Configure o 2FA pela LAN/VPN antes de acessar externamente.'
+  return fallback
+}
 
 function Field({ label, id, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -14,6 +27,20 @@ function Field({ label, id, ...props }: { label: string } & React.InputHTMLAttri
         {label}
       </label>
       <input id={id} className={inputClass} {...props} />
+    </div>
+  )
+}
+
+function Alert({ tone, children }: { tone: 'danger' | 'warning'; children: React.ReactNode }) {
+  const Icon = tone === 'danger' ? AlertCircle : AlertTriangle
+  const toneClass =
+    tone === 'danger'
+      ? 'border-danger/30 bg-danger/10 text-danger'
+      : 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+  return (
+    <div className={cn('flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm leading-snug', toneClass)}>
+      <Icon className="mt-px size-4 shrink-0" strokeWidth={2.25} />
+      <span>{children}</span>
     </div>
   )
 }
@@ -60,7 +87,7 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
       await register({ username, email, password })
       onDone()
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : 'falha no cadastro')
+      setError(authErrorMessage(err, 'register'))
     } finally {
       setBusy(false)
     }
@@ -79,7 +106,7 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
         <Field label="Email" id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Field label="Senha" id="reg-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <p className="-mt-1 text-xs text-mist">Mínimo de 8 caracteres.</p>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <Alert tone="danger">{error}</Alert>}
         <Button type="submit" disabled={!valid || busy}>
           {busy ? 'Criando…' : 'Criar conta'}
         </Button>
@@ -106,7 +133,7 @@ function LoginForm({ status, onDone }: { status: AuthStatus; onDone: () => void 
       await login({ username, password, ...(needsTotp ? { totp } : {}) })
       onDone()
     } catch (err) {
-      setError(err instanceof AuthError ? err.message : 'falha no login')
+      setError(authErrorMessage(err, 'login'))
     } finally {
       setBusy(false)
     }
@@ -115,9 +142,9 @@ function LoginForm({ status, onDone }: { status: AuthStatus; onDone: () => void 
   if (blocked) {
     return (
       <Card>
-        <p className="text-sm text-amber-400">
+        <Alert tone="warning">
           2FA não configurado. Conecte pela LAN/VPN para configurar o segundo fator antes de acessar externamente.
-        </p>
+        </Alert>
       </Card>
     )
   }
@@ -137,7 +164,7 @@ function LoginForm({ status, onDone }: { status: AuthStatus; onDone: () => void 
             onChange={(e) => setTotp(e.target.value)}
           />
         )}
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <Alert tone="danger">{error}</Alert>}
         <Button type="submit" disabled={busy || !username || !password}>
           {busy ? 'Entrando…' : 'Entrar'}
         </Button>
