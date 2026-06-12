@@ -1,21 +1,39 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import type { SessionManager } from "../session/manager.js";
 import type { SettingsStore } from "../settings/store.js";
+import type { AuthContext } from "../auth/context.js";
+import { registerAuthRoutes, sessionMiddleware, CLIENT_IP } from "./auth.js";
+import { resolveClientIp } from "../auth/origin.js";
 
 export interface AppOptions {
-  token: string;
+  auth: AuthContext;
   settings: SettingsStore;
 }
 
-export function createApp(manager: SessionManager, opts: AppOptions): Hono {
-  const app = new Hono();
+type Env = { Variables: { [CLIENT_IP]: string } };
+
+export function createApp(manager: SessionManager, opts: AppOptions): Hono<Env> {
+  const app = new Hono<Env>();
+
+  app.use("*", async (c, next) => {
+    let socketIp = "";
+    try {
+      socketIp = getConnInfo(c).remote.address ?? "";
+    } catch {
+      socketIp = "";
+    }
+    const xff = c.req.header("x-forwarded-for");
+    c.set(CLIENT_IP, resolveClientIp(socketIp, xff, opts.auth.config.trustedProxy));
+    await next();
+  });
+
+  registerAuthRoutes(app as any, opts.auth);
 
   app.use("/api/*", async (c, next) => {
-    const header = c.req.header("Authorization") ?? "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-    if (token !== opts.token) return c.json({ error: "unauthorized" }, 401);
-    await next();
+    if (c.req.path.startsWith("/api/auth/")) return next();
+    return sessionMiddleware(opts.auth)(c, next);
   });
 
   app.get("/api/sessions", (c) => c.json(manager.list()));
