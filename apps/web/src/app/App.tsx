@@ -101,7 +101,7 @@ export function App() {
         />
       </aside>
 
-      <main className={cn('min-h-0 flex-1', mobileChat ? 'flex' : 'hidden lg:flex')}>
+      <main className={cn('min-h-0 min-w-0 flex-1', mobileChat ? 'flex' : 'hidden lg:flex')}>
         {active ? (
           <ChatView
             session={active}
