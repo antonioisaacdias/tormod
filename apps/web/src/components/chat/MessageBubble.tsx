@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { InlineText } from './InlineText'
@@ -9,7 +10,7 @@ interface MessageBubbleProps {
   segments: InlineSegment[]
 }
 
-export function MessageBubble({ author, segments }: MessageBubbleProps) {
+export const MessageBubble = memo(function MessageBubble({ author, segments }: MessageBubbleProps) {
   const isUser = author === 'user'
   return (
     <div className={cn('mb-3.5 flex flex-col', isUser && 'items-end')}>
@@ -31,4 +32,4 @@ export function MessageBubble({ author, segments }: MessageBubbleProps) {
       </div>
     </div>
   )
-}
+})

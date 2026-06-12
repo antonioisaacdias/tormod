@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { Brand } from '@/components/Brand'
 import { SessionList } from '@/components/sessions/SessionList'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { AuthGate } from '@/components/auth/AuthGate'
 import type { SessionAction } from '@/components/sessions/SessionActionsMenu'
+import type { ApprovalDecision } from '@/types/thread'
 
 export function App() {
   const { sessions, unauthorized, loading, refresh, create, close, remove, setMode } = useSessions()
@@ -53,6 +54,14 @@ export function App() {
     void threads.send(active.id, text)
     setDrafts((current) => ({ ...current, [active.id]: '' }))
   }
+
+  // Stable across keystrokes so the memoized Thread isn't re-rendered while typing.
+  const handleDecide = useCallback(
+    (toolUseId: string, decision: ApprovalDecision) => {
+      if (activeId) void threads.decide(activeId, toolUseId, decision)
+    },
+    [threads.decide, activeId],
+  )
 
   async function onCreate() {
     const id = await create()
@@ -113,7 +122,7 @@ export function App() {
             onDraftChange={changeDraft}
             onSend={onSend}
             onStop={() => void threads.interrupt(active.id)}
-            onDecide={(toolUseId, decision) => void threads.decide(active.id, toolUseId, decision)}
+            onDecide={handleDecide}
             onSetPermissionMode={(mode) => void setMode(active.id, mode)}
             onBack={() => setMobileChat(false)}
           />

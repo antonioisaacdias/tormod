@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/cn'
@@ -50,7 +51,7 @@ interface MarkdownProps {
   children: string
 }
 
-export function Markdown({ children }: MarkdownProps) {
+export const Markdown = memo(function Markdown({ children }: MarkdownProps) {
   return (
     <div className="break-words">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
@@ -58,4 +59,4 @@ export function Markdown({ children }: MarkdownProps) {
       </ReactMarkdown>
     </div>
   )
-}
+})

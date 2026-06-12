@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { WorkEntry } from '@/types/thread'
@@ -17,7 +17,7 @@ function summarize(entries: WorkEntry[]): string {
   return parts.join(' · ') || 'trabalho'
 }
 
-export function WorkBalloon({ entries, done, seeded }: WorkBalloonProps) {
+export const WorkBalloon = memo(function WorkBalloon({ entries, done, seeded }: WorkBalloonProps) {
   const [manual, setManual] = useState<boolean | null>(null)
   // Live turns stay open (you watch the work happen + keep it visible after);
   // rehydrated history starts collapsed. Manual toggle overrides either way.
@@ -75,4 +75,4 @@ export function WorkBalloon({ entries, done, seeded }: WorkBalloonProps) {
       )}
     </div>
   )
-}
+})

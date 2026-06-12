@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { MessageBubble } from './MessageBubble'
 import { WorkBalloon } from './WorkBalloon'
 import { ApprovalCard } from './ApprovalCard'
@@ -10,7 +11,7 @@ interface ThreadProps {
   onDecide: (approvalId: string, decision: ApprovalDecision) => void
 }
 
-export function Thread({ items, decisions, working, onDecide }: ThreadProps) {
+export const Thread = memo(function Thread({ items, decisions, working, onDecide }: ThreadProps) {
   const visible = items.filter((item) => !item.gatedBy || decisions[item.gatedBy] === 'allowed')
   const last = visible[visible.length - 1]
   const openWork = last?.kind === 'work' && !last.done
@@ -56,4 +57,4 @@ export function Thread({ items, decisions, working, onDecide }: ThreadProps) {
       )}
     </div>
   )
-}
+})
