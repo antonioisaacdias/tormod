@@ -62,3 +62,21 @@ export interface Settings {
   systemPrompt: string
   defaultPermissionMode: PermissionMode
 }
+
+export interface AuthStatus {
+  registered: boolean
+  external: boolean
+  totpEnabled: boolean
+}
+
+export interface AuthProfile {
+  username: string
+  email: string
+  totpEnabled: boolean
+}
+
+export interface TotpEnrollment {
+  secret: string
+  otpauthUri: string
+  qrDataUrl: string
+}

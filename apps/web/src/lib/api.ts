@@ -1,17 +1,9 @@
 import type { GlobalEvent, HistoryItem, PermissionMode, ServerEvent, SessionMeta, Settings } from './serverTypes'
 
-const TOKEN_KEY = 'tormod:token'
+const MUTATION_HEADERS: HeadersInit = { 'Content-Type': 'application/json', 'X-Tormod': '1' }
 
-export function getToken(): string {
-  return localStorage.getItem(TOKEN_KEY) ?? ''
-}
-
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
-}
-
-function authHeaders(): HeadersInit {
-  return { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' }
+function jsonHeaders(): HeadersInit {
+  return MUTATION_HEADERS
 }
 
 async function expectOk(res: Response): Promise<Response> {
@@ -28,19 +20,19 @@ export class UnauthorizedError extends Error {
 }
 
 export async function listSessions(): Promise<SessionMeta[]> {
-  const res = await expectOk(await fetch('/api/sessions', { headers: authHeaders() }))
+  const res = await expectOk(await fetch('/api/sessions', { credentials: 'include' }))
   return res.json() as Promise<SessionMeta[]>
 }
 
 export async function createSession(body: { title?: string; cwd?: string } = {}): Promise<SessionMeta> {
   const res = await expectOk(
-    await fetch('/api/sessions', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }),
+    await fetch('/api/sessions', { method: 'POST', headers: jsonHeaders(), credentials: 'include', body: JSON.stringify(body) }),
   )
   return res.json() as Promise<SessionMeta>
 }
 
 export async function getHistory(id: string): Promise<HistoryItem[]> {
-  const res = await expectOk(await fetch(`/api/sessions/${id}/history`, { headers: authHeaders() }))
+  const res = await expectOk(await fetch(`/api/sessions/${id}/history`, { credentials: 'include' }))
   return res.json() as Promise<HistoryItem[]>
 }
 
@@ -48,42 +40,50 @@ export async function sendMessage(id: string, text: string): Promise<void> {
   await expectOk(
     await fetch(`/api/sessions/${id}/messages`, {
       method: 'POST',
-      headers: authHeaders(),
+      headers: jsonHeaders(),
+      credentials: 'include',
       body: JSON.stringify({ text }),
     }),
   )
 }
 
 export async function interruptSession(id: string): Promise<void> {
-  await expectOk(await fetch(`/api/sessions/${id}/interrupt`, { method: 'POST', headers: authHeaders() }))
+  await expectOk(
+    await fetch(`/api/sessions/${id}/interrupt`, { method: 'POST', headers: jsonHeaders(), credentials: 'include' }),
+  )
 }
 
 export async function closeSession(id: string): Promise<void> {
-  await expectOk(await fetch(`/api/sessions/${id}/close`, { method: 'POST', headers: authHeaders() }))
+  await expectOk(
+    await fetch(`/api/sessions/${id}/close`, { method: 'POST', headers: jsonHeaders(), credentials: 'include' }),
+  )
 }
 
 export async function setPermissionMode(id: string, mode: PermissionMode): Promise<void> {
   await expectOk(
     await fetch(`/api/sessions/${id}/permission-mode`, {
       method: 'PUT',
-      headers: authHeaders(),
+      headers: jsonHeaders(),
+      credentials: 'include',
       body: JSON.stringify({ mode }),
     }),
   )
 }
 
 export async function deleteSession(id: string): Promise<void> {
-  await expectOk(await fetch(`/api/sessions/${id}`, { method: 'DELETE', headers: authHeaders() }))
+  await expectOk(
+    await fetch(`/api/sessions/${id}`, { method: 'DELETE', headers: jsonHeaders(), credentials: 'include' }),
+  )
 }
 
 export async function getSettings(): Promise<Settings> {
-  const res = await expectOk(await fetch('/api/settings', { headers: authHeaders() }))
+  const res = await expectOk(await fetch('/api/settings', { credentials: 'include' }))
   return res.json() as Promise<Settings>
 }
 
 export async function saveSettings(patch: Partial<Settings>): Promise<Settings> {
   const res = await expectOk(
-    await fetch('/api/settings', { method: 'PUT', headers: authHeaders(), body: JSON.stringify(patch) }),
+    await fetch('/api/settings', { method: 'PUT', headers: jsonHeaders(), credentials: 'include', body: JSON.stringify(patch) }),
   )
   return res.json() as Promise<Settings>
 }
@@ -92,17 +92,13 @@ export async function decide(toolUseId: string, allow: boolean): Promise<void> {
   await expectOk(
     await fetch(`/api/decisions/${toolUseId}`, {
       method: 'POST',
-      headers: authHeaders(),
+      headers: jsonHeaders(),
+      credentials: 'include',
       body: JSON.stringify({ allow }),
     }),
   )
 }
 
-/**
- * Subscribes to a session's SSE stream. Uses fetch (not EventSource) so the
- * bearer token rides in the Authorization header. Resolves when the stream ends
- * or the signal aborts; calls onEvent for each ServerEvent (pings ignored).
- */
 export function streamSession(
   id: string,
   onEvent: (event: ServerEvent) => void,
@@ -111,13 +107,12 @@ export function streamSession(
   return readSSE(`/api/sessions/${id}/stream`, onEvent, signal)
 }
 
-/** Subscribes to the global channel (cross-session status changes). */
 export function streamAll(onEvent: (event: GlobalEvent) => void, signal: AbortSignal): Promise<void> {
   return readSSE('/api/stream', onEvent, signal)
 }
 
 async function readSSE<T>(path: string, onEvent: (event: T) => void, signal: AbortSignal): Promise<void> {
-  const res = await fetch(path, { headers: authHeaders(), signal })
+  const res = await fetch(path, { credentials: 'include', signal })
   if (res.status === 401) throw new UnauthorizedError()
   if (!res.ok || !res.body) throw new Error(`stream failed: ${res.status}`)
 
