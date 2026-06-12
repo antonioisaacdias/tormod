@@ -22,7 +22,7 @@ export function TwoFactorSection() {
     try {
       setEnrollment(await enrollTotp())
     } catch (err) {
-      setError(err instanceof AuthError && err.status === 403 ? 'Configure o 2FA conectado pela LAN/VPN.' : 'falha ao iniciar 2FA')
+      setError(err instanceof AuthError && err.status === 403 ? 'Configure o 2FA conectado pela LAN/VPN.' : 'Falha ao iniciar o 2FA.')
     }
   }
 
@@ -34,7 +34,7 @@ export function TwoFactorSection() {
       setToken('')
       load()
     } catch {
-      setError('código inválido')
+      setError('Código inválido.')
     }
   }
 
@@ -45,7 +45,7 @@ export function TwoFactorSection() {
       setPassword('')
       load()
     } catch {
-      setError('senha inválida')
+      setError('Senha inválida.')
     }
   }
 
@@ -78,7 +78,7 @@ export function TwoFactorSection() {
         </div>
       )}
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </section>
   )
 }

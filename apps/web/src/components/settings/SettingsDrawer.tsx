@@ -31,7 +31,11 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   if (!open) return null
 
   async function handleLogout() {
-    await logout()
+    try {
+      await logout()
+    } catch {
+      // session is gone either way — fall through to the reload
+    }
     window.location.reload()
   }
 

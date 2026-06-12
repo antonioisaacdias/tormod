@@ -60,11 +60,22 @@ function Card({ children }: { children: React.ReactNode }) {
 
 export function AuthGate({ onAuthed }: { onAuthed: () => void }) {
   const [status, setStatus] = useState<AuthStatus | null>(null)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    getStatus().then(setStatus).catch(() => setStatus({ registered: false, external: false, totpEnabled: false }))
+    getStatus().then(setStatus).catch(() => setFailed(true))
   }, [])
 
+  if (failed) {
+    return (
+      <Card>
+        <Alert tone="danger">Não foi possível conectar ao servidor do Tormod.</Alert>
+        <Button className="mt-3 w-full" onClick={() => window.location.reload()}>
+          Tentar de novo
+        </Button>
+      </Card>
+    )
+  }
   if (!status) {
     return <div className="grid h-full place-items-center bg-ink text-faint">Carregando…</div>
   }
