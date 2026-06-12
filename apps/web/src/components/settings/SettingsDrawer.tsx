@@ -48,6 +48,7 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </Button>
         </div>
 
+        <div className="-mr-2 flex-1 overflow-y-auto pr-2">
         {unauthorized ? (
           <p className="text-sm text-danger">Sessão expirada. Entre novamente.</p>
         ) : !settings ? (
@@ -147,8 +148,9 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             </span>
           </div>
         )}
+        </div>
 
-        <div className="mt-auto border-t border-border pt-4">
+        <div className="border-t border-border pt-4">
           <Button variant="danger" onClick={handleLogout} className="w-full">
             <LogOut className="size-4" />
             Sair
