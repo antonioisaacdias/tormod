@@ -3,8 +3,9 @@
 > *Tormod (Þórmóðr, "ânimo/mente de Thor") — a interface remota do homelab cujo hub se chama `odin`.*
 
 - **Data:** 2026-06-08
-- **Status:** aprovado (brainstorming) — pré-implementação
+- **Status:** aprovado (brainstorming) — implementado (núcleo do MVP construído; falta empacotamento/Docker).
 - **Supersede:** o `PRODUCT.md` antigo (concepção Huginn / MCP-de-ops-em-Go), que fica obsoleto. Ver §14 (mudança de concepção) e §16 (pendências).
+- **⚠️ Auth superada:** a autenticação descrita aqui como **bearer token** (§2, §8, §9) foi substituída por usuário único com **register/login + sessão httpOnly + 2FA adaptativo por origem** — ver [`2026-06-11-tormod-auth-design.md`](2026-06-11-tormod-auth-design.md). Onde esta spec falar em "bearer token = o usuário", leia "sessão httpOnly de usuário único".
 
 ---
 
