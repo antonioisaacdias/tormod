@@ -12,4 +12,4 @@ jobs:
       - name: Build image
         run: docker build -t tormod-staging:latest .
       - name: Deploy staging container
-        run: docker compose -f compose.staging.yml up -d
+        run: docker compose -p tormod -f compose.staging.yml up -d
