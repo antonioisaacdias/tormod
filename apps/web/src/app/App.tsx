@@ -10,10 +10,18 @@ import { useSessionThreads } from '@/hooks/useSessionThreads'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/Button'
 import { AuthGate } from '@/components/auth/AuthGate'
+import { ServerScreen } from '@/components/auth/ServerScreen'
+import { isNative, getServerUrl } from '@/lib/platform'
 import type { SessionAction } from '@/components/sessions/SessionActionsMenu'
 import type { ApprovalDecision } from '@/types/thread'
 
 export function App() {
+  const [hasServer, setHasServer] = useState(!isNative() || getServerUrl() !== null)
+
+  if (!hasServer) {
+    return <ServerScreen onConnected={() => setHasServer(true)} />
+  }
+
   const { sessions, unauthorized, loading, refresh, create, close, remove, setMode } = useSessions()
   const [activeId, setActiveId] = usePersistentState<string | null>('tormod:activeId', null)
   const [mobileChat, setMobileChat] = useState(false)
