@@ -87,6 +87,7 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -104,7 +105,8 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
     }
   }
 
-  const valid = username.trim().length >= 3 && email.includes('@') && password.length >= 8
+  const mismatch = confirm.length > 0 && confirm !== password
+  const valid = username.trim().length >= 3 && email.includes('@') && password.length >= 8 && password === confirm
 
   return (
     <Card>
@@ -117,6 +119,14 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
         <Field label="Email" id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Field label="Senha" id="reg-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <p className="-mt-1 text-xs text-mist">Mínimo de 8 caracteres.</p>
+        <Field
+          label="Confirmar senha"
+          id="reg-confirm"
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
+        {mismatch && <p className="-mt-1 text-xs text-danger">As senhas não conferem.</p>}
         {error && <Alert tone="danger">{error}</Alert>}
         <Button type="submit" disabled={!valid || busy}>
           {busy ? 'Criando…' : 'Criar conta'}
