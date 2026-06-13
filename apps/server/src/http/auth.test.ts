@@ -142,6 +142,38 @@ describe("auth routes", () => {
     expect(prot.status).toBe(401);
   });
 
+  it("returns a token in the body for a native client and it authenticates", async () => {
+    const app = build();
+    const reg = await app.request("/api/auth/register", {
+      method: "POST", headers: { ...J, "X-Tormod-Client": "native" },
+      body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
+    });
+    const { token } = (await reg.json()) as { token?: string };
+    expect(typeof token).toBe("string");
+    const prot = await app.request("/api/protected", { headers: { ...J, Authorization: `Bearer ${token}` } });
+    expect(prot.status).toBe(200);
+  });
+
+  it("login returns a token for a native client", async () => {
+    const app = build();
+    await app.request("/api/auth/register", {
+      method: "POST", headers: J, body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
+    });
+    const login = await app.request("/api/auth/login", {
+      method: "POST", headers: { ...J, "X-Tormod-Client": "native" },
+      body: JSON.stringify({ username: "odin", password: "hunter2hunter2" }),
+    });
+    expect(typeof (await login.json() as { token?: string }).token).toBe("string");
+  });
+
+  it("omits the token for a normal (web) client", async () => {
+    const app = build();
+    const reg = await app.request("/api/auth/register", {
+      method: "POST", headers: J, body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
+    });
+    expect(await reg.json()).toEqual({ ok: true });
+  });
+
   it("rejects a mutation missing the CSRF header", async () => {
     const app = build();
     const res = await app.request("/api/auth/register", {

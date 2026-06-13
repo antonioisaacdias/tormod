@@ -33,6 +33,10 @@ function bearerToken(c: { req: { header: (k: string) => string | undefined } }):
   return h.slice(7).trim() || undefined;
 }
 
+function wantsToken(c: { req: { header: (k: string) => string | undefined } }): boolean {
+  return c.req.header("X-Tormod-Client") === "native";
+}
+
 function originIsLocal(c: { get: (k: string) => unknown }, ctx: AuthContext): boolean {
   return isLocal(clientIp(c), ctx.config.trustedCidrs);
 }
@@ -67,10 +71,11 @@ export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
     await next();
   });
 
-  const issue = (c: any) => {
+  const issue = (c: any): string => {
     const ttlSec = ctx.config.sessionTtlDays * SECS_PER_DAY;
     const { id } = ctx.sessions.issue();
     setCookie(c, COOKIE, id, sessionCookieOpts(ctx, ttlSec));
+    return id;
   };
 
   app.get("/api/auth/status", (c) => {
@@ -91,8 +96,8 @@ export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
       email: input.email,
       passwordHash: await hashPassword(input.password),
     });
-    issue(c);
-    return c.json({ ok: true }, 201);
+    const id = issue(c);
+    return c.json(wantsToken(c) ? { ok: true, token: id } : { ok: true }, 201);
   });
 
   app.post("/api/auth/login", async (c) => {
@@ -127,8 +132,8 @@ export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
       return generic();
     }
     ctx.throttle.recordSuccess(username);
-    issue(c);
-    return c.json({ ok: true });
+    const id = issue(c);
+    return c.json(wantsToken(c) ? { ok: true, token: id } : { ok: true });
   });
 
   app.post("/api/auth/logout", sessionMiddleware(ctx), (c) => {
