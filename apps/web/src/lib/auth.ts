@@ -44,7 +44,7 @@ export async function login(body: { username: string; password: string; totp?: s
 
 export async function logout(): Promise<void> {
   await apiFetch('/api/auth/logout', { method: 'POST', headers: MUT })
-  clearToken()
+  if (isNative()) clearToken()
 }
 
 export async function getProfile(): Promise<AuthProfile> {

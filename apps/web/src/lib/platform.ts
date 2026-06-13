@@ -33,6 +33,7 @@ export function clearToken(): void {
 }
 
 export function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  if (isNative() && !getServerUrl()) throw new Error('serverUrl not configured')
   const { url, init: built } = buildRequest(path, init, {
     native: isNative(),
     serverUrl: getServerUrl(),
