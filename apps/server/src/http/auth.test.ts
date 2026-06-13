@@ -126,6 +126,22 @@ describe("auth routes", () => {
     expect(extWithCode.status).toBe(200);
   });
 
+  it("accepts a bearer token on a protected route", async () => {
+    const app = build();
+    const reg = await app.request("/api/auth/register", {
+      method: "POST", headers: J,
+      body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
+    });
+    const token = cookieFrom(reg).split("=")[1] ?? "";
+    const prot = await app.request("/api/protected", { headers: { ...J, Authorization: `Bearer ${token}` } });
+    expect(prot.status).toBe(200);
+  });
+
+  it("rejects an invalid bearer token", async () => {
+    const prot = await build().request("/api/protected", { headers: { ...J, Authorization: "Bearer nope" } });
+    expect(prot.status).toBe(401);
+  });
+
   it("rejects a mutation missing the CSRF header", async () => {
     const app = build();
     const res = await app.request("/api/auth/register", {

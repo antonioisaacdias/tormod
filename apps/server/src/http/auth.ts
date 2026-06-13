@@ -27,6 +27,12 @@ function clientIp(c: { get: (k: string) => unknown }): string {
   return (c.get(CLIENT_IP) as string) ?? "";
 }
 
+function bearerToken(c: { req: { header: (k: string) => string | undefined } }): string | undefined {
+  const h = c.req.header("Authorization");
+  if (!h || !h.startsWith("Bearer ")) return undefined;
+  return h.slice(7).trim() || undefined;
+}
+
 function originIsLocal(c: { get: (k: string) => unknown }, ctx: AuthContext): boolean {
   return isLocal(clientIp(c), ctx.config.trustedCidrs);
 }
@@ -49,7 +55,7 @@ function requireCsrf(c: { req: { method: string; header: (k: string) => string |
 
 export function sessionMiddleware(ctx: AuthContext) {
   return async (c: any, next: () => Promise<void>) => {
-    const id = getCookie(c, COOKIE);
+    const id = bearerToken(c) ?? getCookie(c, COOKIE);
     if (!id || !ctx.sessions.validate(id)) return c.json({ error: "unauthorized" }, 401);
     await next();
   };
