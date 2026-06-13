@@ -52,7 +52,39 @@ The decision layer is Claude Code's own permission system, surfaced in the UI:
 
 ## Status
 
-The backend and the web frontend are **built and running**: the real `ClaudeCodeAdapter` is wired, sessions stream live, and auth is in place. What remains for the v1 milestone is **packaging** — a Docker container on `odin`, the front served same-origin by Hono, a clean production build — plus two robustness items (SSE replay on reconnect, installable PWA). See [Roadmap](#roadmap).
+Tormod runs end to end: the real `ClaudeCodeAdapter` is wired, sessions stream live, auth and settings are in place, and a production image is deployed to a homologation environment by CI on every push to `main`. The project is in its **`0.x`** line — already usable as a daily driver, not yet declared stable. Between here and **1.0** stand the mobile app, push notifications, SSE reconnection and self-host packaging. See [Versioning](#versioning) and [Roadmap](#roadmap).
+
+## Versioning
+
+Tormod follows [Semantic Versioning](https://semver.org). It is currently in the **`0.x`** line: pre-1.0, so anything — the HTTP contract, the storage schema, behaviour — may still change between minor releases. There are no `alpha`/`beta` tags; `0.x` itself is the signal that the project is still stabilising. Releases are cut as git tags (`vMAJOR.MINOR.PATCH`) on `main` and published as Forgejo Releases; the Android build additionally carries an Android `versionCode`/`versionName` pair.
+
+### What "Tormod 1.0" means
+
+> A self-hostable remote control for Claude Code that anyone can stand up on their own machine, install on an Android phone, and use to operate their homelab from anywhere over WireGuard — safely, without losing state, and notified when the brain needs them.
+
+`1.0` is reserved for the point where Tormod is **ready for someone other than the author to self-host and rely on**. That bar:
+
+- [x] **Core** — chat, sessions, approval cards, permission gate, audit, single-user auth, settings, durability.
+- [ ] **Installable Android app** — the React UI wrapped with Capacitor, talking to a user-entered server over WireGuard with token auth.
+- [ ] **Push notifications** — be alerted on the phone when an approval card is waiting, with the app closed.
+- [ ] **SSE reconnection** — `Last-Event-ID` replay so the live stream survives backgrounding and network changes.
+- [ ] **Self-host packaging** — tagged Docker image + signed APK as release artifacts, plus setup docs good enough for a stranger to run their own instance.
+
+Everything else — session resume/rename polish, real search, end-to-end tests, multi-server in one app, the future modules and Mimir — is **post-1.0** (the `1.x` line).
+
+### Release ladder
+
+The current release is **`0.4.0`** — the core is complete and a homolog instance is live. The remaining minors lead to 1.0:
+
+| Version | Milestone | |
+|---|---|---|
+| `0.1.0`–`0.3.0` | Foundation · sessions + web · auth + settings | ✅ |
+| **`0.4.0`** | Docker + CI + live homolog | ✅ **← current** |
+| `0.5.0` | Token seam + installable Android app (Capacitor) | |
+| `0.6.0` | Push notifications | |
+| `0.7.0` | SSE reconnection (`Last-Event-ID`) | |
+| `0.8.0` | Release packaging (signed image + APK) + self-host docs + polish | |
+| `1.0.0` | The bar above, met — ready for others to self-host | |
 
 ## Requirements
 
@@ -164,8 +196,19 @@ The MVP is the base; further surfaces plug into the front-end shell. Full detail
 - [x] **`ClaudeCodeAdapter`** — the real brain via the Claude Agent SDK (streaming, history, usage, durability).
 - [x] **Web front-end** — React app: chat, sessions, approval cards, settings.
 - [x] **Single-user auth** — register/login, httpOnly session, Argon2id, origin-adaptive TOTP.
-- [ ] **Docker + WireGuard** — non-root container on `odin`, front served same-origin, bound to the `wg0` IP, HTTPS at the edge.
-- [ ] **Robustness** — SSE replay on reconnect (`Last-Event-ID`), installable PWA (manifest + service worker).
+- [x] **Docker + CI** — non-root container on `odin`, front served same-origin by Hono, deployed to homolog by Forgejo Actions on every push to `main`.
+
+**The road to 1.0:**
+
+- [ ] **Token auth seam** — backend accepts the session as an `Authorization: Bearer` header alongside the cookie, so decoupled clients can authenticate.
+- [ ] **Mobile app (Capacitor)** — the React UI wrapped as an installable Android app, talking to a user-entered server over WireGuard.
+- [ ] **Push notifications** — approval-card alerts on the phone with the app closed.
+- [ ] **SSE reconnection** — `Last-Event-ID` replay across backgrounding and network changes.
+- [ ] **Release & self-host packaging** — tagged Docker image + signed APK as release artifacts, plus setup docs for a stranger to run their own instance.
+
+**Post-1.0 (`1.x`):**
+
+- [ ] **Polish** — session resume/rename, real search, end-to-end tests.
 - [ ] **Future modules** — config-as-tools, dashboard, document workspace, usage & observability.
 - [ ] **Mimir** — companion microservice for long-term memory, history and metrics.
 
