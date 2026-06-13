@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -14,6 +15,7 @@ export interface AppOptions {
   auth: AuthContext;
   settings: SettingsStore;
   webDist?: string;
+  corsOrigins?: string[];
 }
 
 type Env = { Variables: { [CLIENT_IP]: string } };
@@ -32,6 +34,17 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono<Env> 
     c.set(CLIENT_IP, resolveClientIp(socketIp, xff, opts.auth.config.trustedProxy));
     await next();
   });
+
+  if (opts.corsOrigins && opts.corsOrigins.length > 0) {
+    app.use(
+      "/api/*",
+      cors({
+        origin: opts.corsOrigins,
+        allowHeaders: ["Content-Type", "Authorization", "X-Tormod", "X-Tormod-Client"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      }),
+    );
+  }
 
   registerAuthRoutes(app as any, opts.auth);
 

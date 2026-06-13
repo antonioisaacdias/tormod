@@ -150,3 +150,27 @@ describe("createApp — static web", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("createApp — CORS for the native client", () => {
+  function corsApp() {
+    const settings = SettingsStore.open(":memory:");
+    const mgr = new SessionManager(new FakeBrainAdapter(), Audit.open(":memory:"), undefined, settings);
+    return createApp(mgr, { auth: ctx(), settings, corsOrigins: ["http://localhost"] });
+  }
+
+  it("allows the configured native origin on a preflight", async () => {
+    const res = await corsApp().request("/api/sessions", {
+      method: "OPTIONS",
+      headers: { Origin: "http://localhost", "Access-Control-Request-Method": "GET" },
+    });
+    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost");
+  });
+
+  it("does not allow a foreign origin", async () => {
+    const res = await corsApp().request("/api/sessions", {
+      method: "OPTIONS",
+      headers: { Origin: "http://evil.example", "Access-Control-Request-Method": "GET" },
+    });
+    expect(res.headers.get("access-control-allow-origin")).not.toBe("http://evil.example");
+  });
+});
