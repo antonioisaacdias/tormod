@@ -10,6 +10,17 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-11-tormod-staging-pipeline-design.md`
 
+---
+
+## Outcome (2026-06-12) — DONE, verified live
+
+The pipeline is complete and running. Push to `main` builds the image and redeploys the staging container at `http://192.168.0.10:8080` (production build, no Vite/HMR, data persisted). All tasks landed; two deviations from the plan as written:
+
+- **Runner is `forgejo-runner` v12.11.1, not `act_runner` v3.x.** The Forgejo instance uses the modern registration flow (it hands out `uuid` + `token` for a `server.connections` config block), not the deprecated `register` subcommand. Setup: systemd `forgejo-runner.service` (`User=odin`, `Group=docker` → builds without root), config at `~/.config/act_runner/config.yaml` with `runner.labels: [host:host]` (matches `runs-on: host`) and the `server.connections.forgejo` block pointing at `http://192.168.0.126:30142/`. Helper: `~/setup-forgejo-runner.sh <uuid> <token>`.
+- **Deploy step pins the compose project: `docker compose -p tormod -f compose.staging.yml up -d`.** Without `-p`, CI runs compose from its checkout dir (`~/.cache/act/<hash>/...`) → a different project name → `container_name: tormod-staging` collides with the existing container → deploy fails while the build succeeds. Pinning `-p tormod` makes CI adopt the same project regardless of the runner's workdir.
+
+Verified live: two pushes (initial + the `-p tormod` fix); the second rebuilt the image and recreated the container automatically; `/data/tormod.db` (registered user + audit) survived the redeploy; served HTML is the bundled prod build with no `/@vite/client`.
+
 **Branch:** work on `feat/web-ui` (the integration trunk). Promotion to staging happens later by merging `feat/web-ui` → `main` and pushing to Forgejo.
 
 **Conventions:** TypeScript strict + ESM (`.js` import suffix in server, none in web). Frontend comment-free. Commit messages Conventional, English, **never** mention AI/Claude. SQLite stores follow the existing `static open(path)` pattern.
