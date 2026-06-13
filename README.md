@@ -184,7 +184,7 @@ All routes live under `/api`. Everything except `/api/auth/{status,login,registe
 | `TORMOD_TRUSTED_CIDRS` | LAN/VPN/loopback | comma-separated CIDRs treated as "local" (2FA skipped) |
 | `TORMOD_TRUSTED_PROXY` | — | proxy IP whose `X-Forwarded-For` is trusted for client-IP resolution |
 | `TORMOD_COOKIE_SECURE` | `true` | set `false` for plain-HTTP LAN dev; keep `true` behind HTTPS |
-| `TORMOD_CORS_ORIGINS` | `http://localhost` | comma-separated origins allowed by CORS (the Capacitor app's WebView origin) |
+| `TORMOD_CORS_ORIGINS` | — | comma-separated origins allowed by CORS (unset = CORS off; set to the Capacitor WebView origin `http://localhost` to enable the native app) |
 | `TORMOD_SESSION_TTL_DAYS` | `30` | session cookie / server-side session lifetime |
 
 ## Roadmap

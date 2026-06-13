@@ -30,7 +30,7 @@ function clientIp(c: { get: (k: string) => unknown }): string {
 function bearerToken(c: { req: { header: (k: string) => string | undefined } }): string | undefined {
   const h = c.req.header("Authorization");
   if (!h || !h.startsWith("Bearer ")) return undefined;
-  return h.slice(7).trim() || undefined;
+  return h.slice(7) || undefined;
 }
 
 function wantsToken(c: { req: { header: (k: string) => string | undefined } }): boolean {

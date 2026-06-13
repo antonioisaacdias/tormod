@@ -37,7 +37,7 @@ const auth = {
   config: authConfig,
 };
 
-const corsOrigins = (process.env.TORMOD_CORS_ORIGINS ?? "http://localhost")
+const corsOrigins = (process.env.TORMOD_CORS_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);

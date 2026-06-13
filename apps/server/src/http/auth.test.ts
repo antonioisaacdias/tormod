@@ -132,7 +132,7 @@ describe("auth routes", () => {
       method: "POST", headers: J,
       body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
     });
-    const token = cookieFrom(reg).split("=")[1] ?? "";
+    const token = cookieFrom(reg).split("=").slice(1).join("=");
     const prot = await app.request("/api/protected", { headers: { ...J, Authorization: `Bearer ${token}` } });
     expect(prot.status).toBe(200);
   });
