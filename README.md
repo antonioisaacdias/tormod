@@ -121,7 +121,7 @@ Open `http://<host>:5173`. On first run the app shows a **registration** screen 
 
 ### HTTP API (current)
 
-All routes live under `/api`. Everything except `/api/auth/{status,login,register}` requires a valid session cookie; mutations require the `X-Tormod: 1` header (CSRF defense).
+All routes live under `/api`. Everything except `/api/auth/{status,login,register}` requires a valid session — carried as the `tormod_session` httpOnly cookie (web, same-origin) or an `Authorization: Bearer <session id>` header (native client). Mutations require the `X-Tormod: 1` header (CSRF defense). Native clients send `X-Tormod-Client: native` on `login`/`register` to receive the session id in the response body.
 
 | Method | Route | Purpose |
 |---|---|---|
@@ -184,6 +184,7 @@ All routes live under `/api`. Everything except `/api/auth/{status,login,registe
 | `TORMOD_TRUSTED_CIDRS` | LAN/VPN/loopback | comma-separated CIDRs treated as "local" (2FA skipped) |
 | `TORMOD_TRUSTED_PROXY` | — | proxy IP whose `X-Forwarded-For` is trusted for client-IP resolution |
 | `TORMOD_COOKIE_SECURE` | `true` | set `false` for plain-HTTP LAN dev; keep `true` behind HTTPS |
+| `TORMOD_CORS_ORIGINS` | `http://localhost` | comma-separated origins allowed by CORS (the Capacitor app's WebView origin) |
 | `TORMOD_SESSION_TTL_DAYS` | `30` | session cookie / server-side session lifetime |
 
 ## Roadmap
