@@ -34,3 +34,6 @@ apps/web/android/app/release/
 apps/web/android/keystore.properties
 apps/web/**/*.keystore
 apps/web/**/*.jks
+
+# Brainstorm visual companion (mockups locais)
+.superpowers/
