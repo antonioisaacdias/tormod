@@ -4,8 +4,9 @@ const config: CapacitorConfig = {
   appId: 'br.com.diaslabs.tormod',
   appName: 'Tormod',
   webDir: 'dist',
-  android: {
+  server: {
     androidScheme: 'http',
+    cleartext: true,
   },
 }
 
