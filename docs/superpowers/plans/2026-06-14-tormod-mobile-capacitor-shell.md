@@ -622,3 +622,34 @@ Expected: todos os passos OK sobre a wg, HTTP dentro do túnel. Documentar resul
 ## Execução
 
 Pré-requisito do gate: Phase 0 inteira antes da Phase 1; Task 1.4 (gate) antes da Phase 2.
+
+---
+
+## RESULTADO — Spike 0 PASSOU (2026-06-14)
+
+Gate de viabilidade do SSE no WebView **validado no emulador** (debian, headless→janela X11), cérebro **real** (claude-opus-4-8). Prova capturada via fetch-reader rodando dentro do próprio WebView (CDP), contra a instância de spike `odin:8081` (branch atual, CORS on, brain real, DB `/tmp`):
+
+```
+t=2211ms  event: usage  (model claude-opus-4-8[1m])
+t=4070ms  event: text   {"text":"p"}      ← "pong" fatiado em 2 deltas
+t=4112ms  event: text   {"text":"ong"}       em timestamps distintos
+t=4192ms  event: result {"ok":true,"costUsd":0.181}
+t=5991ms  event: usage  (contextTokens)
+t=6811ms  event: usage  (fiveHourPct/sevenDayPct)
+t=15004 / 30009ms  event: ping (keepalive — stream longo se mantém)
+```
+8 tempos de chegada distintos → streaming incremental, não blob único. Depois: `localStorage` semeado (`tormod:serverUrl`+`tormod:token`) → app autenticado, lista a sessão real, badge "Claude Code · 1 vivas". CORS+Bearer+cleartext http→http todos OK no WebView sob `androidScheme:http`.
+
+### Desvios descobertos (corrigir no plano acima ao executar Fase C)
+
+1. **`androidScheme` fica sob `server`, NÃO sob `android`.** A Task 1.1 mostrava `android: { androidScheme }` — ERRADO: Capacitor ignora e serve `https://localhost` (mixed-content bloqueia o backend http). Correto:
+   ```ts
+   server: { androidScheme: 'http', cleartext: true }
+   ```
+   `cleartext: true` é necessário pro backend http externo (LAN/wg). Em Fase C, restringir via `network_security_config` (Task 2.1) e reavaliar se `cleartext:true` global pode sair.
+2. **JDK do sistema no debian é JRE-only (sem `javac`).** Gradle falha com "Toolchain ... does not provide JAVA_COMPILER". Fix sem sudo: Temurin JDK 21 user-local em `/data/android/jdk` + `~/.gradle/gradle.properties` com `org.gradle.java.home` (config da máquina, NÃO commitada).
+3. **Toolchain em `/data`** (disco de experiências do odin, ver [[reference-debian-data-disk]]): `ANDROID_HOME=/data/android/sdk`, `ANDROID_AVD_HOME=/data/android/avd`, JDK em `/data/android/jdk`, checkout em `/data/tormod`. nvm fica no `$HOME` (leve).
+4. **debian sem chaves git** → modelo **odin=autoridade git, debian=executor de build**. Sync via `tar` sobre ssh (não há `rsync` no odin). O `android/` gerado volta pro odin pra commitar.
+5. **Emulador** roda como serviço `systemd-run --user` (sobrevive entre sessões via `loginctl enable-linger odin`). Janela ao vivo: `xhost +SI:localuser:odin` no desktop do debian + `DISPLAY=:0`, `-gpu swiftshader_indirect`.
+6. **Driving headless do app:** `adb shell input` é sabotado pelos diálogos de stylus/handwriting do Android 15. Usar **CDP** (`cdp.mjs`, Node 22 nativo WebSocket+fetch) pra semear `localStorage`/observar SSE.
+7. **Spike server descartável** em `odin:8081` (reachable do debian, sem bloqueio de firewall) + usuário `spike`/`spikepass123` — limpar depois. O homolog (`:8080`, `main`) NÃO tem CORS (Plano 1 mobile não está na `main`).
