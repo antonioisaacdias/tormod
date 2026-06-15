@@ -37,3 +37,7 @@ apps/web/**/*.jks
 
 # Brainstorm visual companion (mockups locais)
 .superpowers/
+
+# Quality gates (code-gates) — cobertura e artefatos de scan
+coverage/
+.scannerwork/
