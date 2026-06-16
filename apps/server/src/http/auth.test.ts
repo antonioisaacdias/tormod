@@ -5,9 +5,8 @@ import { UserStore } from "../auth/users.js";
 import { AuthSessionStore } from "../auth/authSessions.js";
 import { Throttle } from "../auth/throttle.js";
 import type { AuthContext } from "../auth/context.js";
+import type { Env } from "./app.js";
 import { generateSync } from "otplib";
-
-type Env = { Variables: { [CLIENT_IP]: string } };
 
 function build(ip = "192.168.0.10"): Hono<Env> {
   const ctx: AuthContext = {
