@@ -18,13 +18,13 @@ export interface AppOptions {
   corsOrigins?: string[];
 }
 
-type Env = { Variables: { [CLIENT_IP]: string } };
+export type Env = { Variables: { [CLIENT_IP]: string } };
 
 export function createApp(manager: SessionManager, opts: AppOptions): Hono<Env> {
   const app = new Hono<Env>();
 
   app.use("*", async (c, next) => {
-    let socketIp = "";
+    let socketIp: string;
     try {
       socketIp = getConnInfo(c).remote.address ?? "";
     } catch {
@@ -46,7 +46,7 @@ export function createApp(manager: SessionManager, opts: AppOptions): Hono<Env> 
     );
   }
 
-  registerAuthRoutes(app as any, opts.auth);
+  registerAuthRoutes(app, opts.auth);
 
   app.use("/api/*", async (c, next) => {
     if (c.req.path.startsWith("/api/auth/")) return next();
