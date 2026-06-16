@@ -19,11 +19,15 @@
     "shlex": "^2.1.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
     "@types/qrcode": "^1.5.6",
     "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^10.5.0",
+    "globals": "^17.6.0",
     "typescript": "^5.6.0",
+    "typescript-eslint": "^8.61.1",
     "vitest": "^4.1.9"
   }
 }
