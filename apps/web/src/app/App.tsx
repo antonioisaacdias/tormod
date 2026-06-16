@@ -32,6 +32,7 @@ export function App() {
   const threads = useSessionThreads()
   const runtime = threads.get(active?.id ?? null)
   const ensure = threads.ensure
+  const decide = threads.decide
 
   // Open the active session's stream; previously-opened streams stay alive so a
   // working session's thinking/tooling isn't lost when you switch away.
@@ -58,9 +59,9 @@ export function App() {
   // Stable across keystrokes so the memoized Thread isn't re-rendered while typing.
   const handleDecide = useCallback(
     (toolUseId: string, decision: ApprovalDecision) => {
-      if (activeId) void threads.decide(activeId, toolUseId, decision)
+      if (activeId) void decide(activeId, toolUseId, decision)
     },
-    [threads.decide, activeId],
+    [decide, activeId],
   )
 
   async function onCreate() {

@@ -23,6 +23,7 @@ export function useSessions() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount; refresh sets state after the async fetch resolves
     void refresh()
   }, [refresh])
 
