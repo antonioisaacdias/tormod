@@ -113,6 +113,43 @@ describe('connectSSE', () => {
     await run
   })
 
+  it('reconnects early when the network comes back online', async () => {
+    queueResponses(
+      streamResponse([]), // ends immediately -> enters backoff wait
+      streamResponse([], { keepOpen: true }),
+    )
+    const ctrl = new AbortController()
+    const run = connectSSE('/p', { onEvent: () => {}, signal: ctrl.signal })
+    await vi.advanceTimersByTimeAsync(0) // first connection opens, then ends
+    expect(apiFetch).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(50) // well short of backoff[0] (1000ms)
+    expect(apiFetch).toHaveBeenCalledTimes(1) // still waiting
+    window.dispatchEvent(new Event('online')) // wake -> cut the wait short
+    await vi.advanceTimersByTimeAsync(0)
+    expect(apiFetch).toHaveBeenCalledTimes(2) // reconnected without the full 1000ms backoff
+    ctrl.abort()
+    await run
+  })
+
+  it('reconnects early when the tab becomes visible', async () => {
+    queueResponses(
+      streamResponse([]), // ends immediately -> enters backoff wait
+      streamResponse([], { keepOpen: true }),
+    )
+    const ctrl = new AbortController()
+    const run = connectSSE('/p', { onEvent: () => {}, signal: ctrl.signal })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(apiFetch).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(50)
+    expect(apiFetch).toHaveBeenCalledTimes(1)
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    document.dispatchEvent(new Event('visibilitychange')) // wake -> cut the wait short
+    await vi.advanceTimersByTimeAsync(0)
+    expect(apiFetch).toHaveBeenCalledTimes(2)
+    ctrl.abort()
+    await run
+  })
+
   it('does not reconnect after external abort', async () => {
     queueResponses(streamResponse([], { keepOpen: true }))
     const ctrl = new AbortController()
