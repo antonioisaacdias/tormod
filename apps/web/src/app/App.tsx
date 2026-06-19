@@ -119,6 +119,7 @@ export function App() {
             usage={runtime.usage}
             decisions={runtime.thread.decisions}
             working={runtime.working}
+            connection={runtime.connection}
             draft={drafts[active.id] ?? ''}
             onDraftChange={changeDraft}
             onSend={onSend}
