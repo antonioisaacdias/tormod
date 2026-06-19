@@ -17,7 +17,10 @@ const { m, UnauthorizedError } = vi.hoisted(() => {
       deleteSession: vi.fn(),
       setPermissionMode: vi.fn(),
       streamAll: vi.fn(),
-      captured: { cb: null as null | ((e: GlobalEvent) => void) },
+      captured: {
+        cb: null as null | ((e: GlobalEvent) => void),
+        onReconnect: null as null | (() => void),
+      },
     },
     UnauthorizedError,
   }
@@ -50,8 +53,9 @@ beforeEach(() => {
     fn.mockReset()
   }
   m.captured.cb = null
-  m.streamAll.mockImplementation((cb: (e: GlobalEvent) => void) => {
-    m.captured.cb = cb
+  m.streamAll.mockImplementation((opts: { onEvent: (e: GlobalEvent) => void; onReconnect?: () => void }) => {
+    m.captured.cb = opts.onEvent
+    m.captured.onReconnect = opts.onReconnect ?? null
     return new Promise<void>(() => {})
   })
   m.listSessions.mockResolvedValue([])
@@ -85,6 +89,19 @@ describe('useSessions', () => {
 
     act(() => m.captured.cb?.({ type: 'other' } as unknown as GlobalEvent))
     expect(result.current.sessions[0].status).toBe('closed')
+  })
+
+  it('refetches the session list when the global stream reconnects', async () => {
+    m.listSessions.mockResolvedValue([meta({ id: 's1' })])
+    const { result } = renderHook(() => useSessions())
+    await waitFor(() => expect(result.current.sessions).toHaveLength(1))
+    expect(m.listSessions).toHaveBeenCalledTimes(1)
+
+    m.listSessions.mockResolvedValue([meta({ id: 's1' }), meta({ id: 's2' })])
+    await act(async () => {
+      m.captured.onReconnect?.()
+    })
+    await waitFor(() => expect(result.current.sessions.map((s) => s.id)).toEqual(['s1', 's2']))
   })
 
   it('create returns the new id and refreshes; failure returns null', async () => {
