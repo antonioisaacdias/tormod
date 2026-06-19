@@ -101,11 +101,13 @@ export function foldEvent(state: ThreadState, event: ServerEvent): ThreadState {
       return appendWork(state, toolEntry(event.id, event.request), false)
 
     case 'permission_request': {
-      // A carded tool is shown as a prominent approval, not buried in the work
-      // balloon — pull its tentative entry back out, then add the card.
+      // A carded tool is shown as a prominent approval, not buried in a work
+      // balloon — pull its entry back out (including from a done balloon seeded
+      // from history on reconnect, so the replayed request never duplicates it),
+      // then add the card.
       const stripped = state.items
         .map((item) =>
-          item.kind === 'work' && !item.done
+          item.kind === 'work'
             ? { ...item, entries: item.entries.filter((e) => !(e.type === 'tool' && e.id === event.toolUseId)) }
             : item,
         )
@@ -181,7 +183,7 @@ export function seedThread(history: HistoryItem[]): ThreadState {
     if (entry.role === 'tool') {
       if (entry.tool === 'AskUserQuestion') continue // re-asked inline; never a work-balloon entry
       const last = items[items.length - 1]
-      const we = toolEntry(`h${seq++}`, { tool: entry.tool, input: entry.input })
+      const we = toolEntry(entry.id ?? `h${seq++}`, { tool: entry.tool, input: entry.input })
       if (last && last.kind === 'work') {
         items[items.length - 1] = { ...last, entries: [...last.entries, we] }
       } else {
