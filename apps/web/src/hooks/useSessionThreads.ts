@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { decide as decideApi, getHistory, interruptSession, sendMessage, streamSession } from '@/lib/api'
+import type { ConnectionStatus } from '@/lib/api'
 import { appendUserMessage, emptyThread, foldEvent, seedThread, setDecision, type ThreadState } from '@/lib/foldEvents'
 import type { ApprovalDecision } from '@/types/thread'
 import type { SessionUsage } from '@/types/usage'
@@ -9,9 +10,10 @@ export interface SessionRuntime {
   thread: ThreadState
   usage: SessionUsage
   working: boolean
+  connection: ConnectionStatus
 }
 
-const EMPTY_RUNTIME: SessionRuntime = { thread: emptyThread, usage: INITIAL_USAGE, working: false }
+const EMPTY_RUNTIME: SessionRuntime = { thread: emptyThread, usage: INITIAL_USAGE, working: false, connection: 'open' }
 
 /**
  * Keeps a live SSE stream + accumulated thread state PER session, surviving
@@ -38,7 +40,8 @@ export function useSessionThreads() {
 
       const ctrl = new AbortController()
       ctrls.current.set(id, ctrl)
-      void (async () => {
+
+      const loadHistory = async () => {
         try {
           const history = await getHistory(id)
           if (ctrl.signal.aborted) return
@@ -46,10 +49,13 @@ export function useSessionThreads() {
         } catch (err) {
           if (!ctrl.signal.aborted) console.error('getHistory', err)
         }
+      }
+
+      void (async () => {
+        await loadHistory()
         if (ctrl.signal.aborted) return
-        void streamSession(
-          id,
-          (event) => {
+        void streamSession(id, {
+          onEvent: (event) => {
             if (event.type === 'usage') {
               update(id, (r) => ({ ...r, usage: mergeUsage(r.usage, event) }))
               return
@@ -60,8 +66,15 @@ export function useSessionThreads() {
               working: event.type === 'result' || event.type === 'error' ? false : r.working,
             }))
           },
-          ctrl.signal,
-        ).catch((err) => {
+          onStatus: (connection) => update(id, (r) => ({ ...r, connection })),
+          onReconnect: () => {
+            // Resync: clear the possibly-stale working flag, reseed durable state.
+            // The reopened stream replays any pending approval (server-side).
+            update(id, (r) => ({ ...r, working: false }))
+            void loadHistory()
+          },
+          signal: ctrl.signal,
+        }).catch((err) => {
           if (!ctrl.signal.aborted) console.error('streamSession', err)
         })
       })()

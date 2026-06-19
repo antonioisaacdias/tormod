@@ -25,8 +25,8 @@ beforeEach(() => {
   for (const fn of [m.getHistory, m.streamSession, m.sendMessage, m.interruptSession, m.decide]) fn.mockReset()
   m.streamCb.fn = null
   m.getHistory.mockResolvedValue([])
-  m.streamSession.mockImplementation((_id: string, cb: (e: unknown) => void) => {
-    m.streamCb.fn = cb
+  m.streamSession.mockImplementation((_id: string, opts: { onEvent: (e: unknown) => void }) => {
+    m.streamCb.fn = opts.onEvent
     return new Promise<void>(() => {})
   })
   m.sendMessage.mockResolvedValue(undefined)
@@ -54,6 +54,15 @@ describe('useSessionThreads', () => {
     const { result } = renderHook(() => useSessionThreads())
     expect(result.current.get('nope').working).toBe(false)
     expect(result.current.get(null).working).toBe(false)
+    expect(result.current.get('nope').connection).toBe('open')
+  })
+
+  it('tracks connection status from the stream', async () => {
+    const result = await mounted()
+    expect(result.current.get('s1').connection).toBe('open')
+    const opts = m.streamSession.mock.calls[0][1] as { onStatus: (s: string) => void }
+    act(() => opts.onStatus('reconnecting'))
+    expect(result.current.get('s1').connection).toBe('reconnecting')
   })
 
   it('merges usage events into the runtime', async () => {
