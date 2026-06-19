@@ -1,5 +1,9 @@
 import { apiFetch } from './platform'
+import { connectSSE, UnauthorizedError, type StreamOpts } from './sse'
 import type { GlobalEvent, HistoryItem, PermissionMode, ServerEvent, SessionMeta, Settings } from './serverTypes'
+
+export { UnauthorizedError } from './sse'
+export type { ConnectionStatus, StreamOpts } from './sse'
 
 const MUTATION_HEADERS: HeadersInit = { 'Content-Type': 'application/json', 'X-Tormod': '1' }
 
@@ -11,13 +15,6 @@ async function expectOk(res: Response): Promise<Response> {
   if (res.status === 401) throw new UnauthorizedError()
   if (!res.ok) throw new Error(`request failed: ${res.status}`)
   return res
-}
-
-export class UnauthorizedError extends Error {
-  constructor() {
-    super('unauthorized')
-    this.name = 'UnauthorizedError'
-  }
 }
 
 export async function listSessions(): Promise<SessionMeta[]> {
@@ -79,43 +76,10 @@ export async function decide(toolUseId: string, allow: boolean): Promise<void> {
   )
 }
 
-export function streamSession(id: string, onEvent: (event: ServerEvent) => void, signal: AbortSignal): Promise<void> {
-  return readSSE(`/api/sessions/${id}/stream`, onEvent, signal)
+export function streamSession(id: string, opts: StreamOpts<ServerEvent>): Promise<void> {
+  return connectSSE(`/api/sessions/${id}/stream`, opts)
 }
 
-export function streamAll(onEvent: (event: GlobalEvent) => void, signal: AbortSignal): Promise<void> {
-  return readSSE('/api/stream', onEvent, signal)
-}
-
-async function readSSE<T>(path: string, onEvent: (event: T) => void, signal: AbortSignal): Promise<void> {
-  const res = await apiFetch(path, { signal })
-  if (res.status === 401) throw new UnauthorizedError()
-  if (!res.ok || !res.body) throw new Error(`stream failed: ${res.status}`)
-
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const frames = buffer.split('\n\n')
-    buffer = frames.pop() ?? ''
-    for (const frame of frames) {
-      const dataLine = frame.split('\n').find((line) => line.startsWith('data:'))
-      if (!dataLine) continue
-      const payload = dataLine.slice(5).trim()
-      if (!payload) continue
-      let parsed: unknown
-      try {
-        parsed = JSON.parse(payload)
-      } catch {
-        continue
-      }
-      if (parsed && typeof parsed === 'object' && 'type' in parsed) {
-        onEvent(parsed as T)
-      }
-    }
-  }
+export function streamAll(opts: StreamOpts<GlobalEvent>): Promise<void> {
+  return connectSSE('/api/stream', opts)
 }

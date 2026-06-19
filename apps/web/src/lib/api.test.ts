@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('./platform', () => ({ apiFetch: vi.fn() }))
+vi.mock('./sse', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sse')>()),
+  connectSSE: vi.fn(() => Promise.resolve()),
+}))
 
 import {
   listSessions,
@@ -19,28 +23,23 @@ import {
   UnauthorizedError,
 } from './api'
 import * as platform from './platform'
-import type { GlobalEvent } from './serverTypes'
+import { connectSSE, type StreamOpts } from './sse'
+import type { GlobalEvent, ServerEvent } from './serverTypes'
 
 const fetchMock = vi.mocked(platform.apiFetch)
+const connectMock = vi.mocked(connectSSE)
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 const empty = (status = 200) => new Response(null, { status })
 
-function sse(chunks: string[], status = 200): Response {
-  const enc = new TextEncoder()
-  const stream = new ReadableStream({
-    start(controller) {
-      for (const c of chunks) controller.enqueue(enc.encode(c))
-      controller.close()
-    },
-  })
-  return new Response(stream, { status })
-}
-
 const callPath = () => fetchMock.mock.calls[0][0]
 const callInit = () => fetchMock.mock.calls[0][1]
 
-beforeEach(() => fetchMock.mockReset())
+beforeEach(() => {
+  fetchMock.mockReset()
+  connectMock.mockReset()
+  connectMock.mockResolvedValue(undefined)
+})
 
 describe('expectOk error mapping', () => {
   it('throws UnauthorizedError on 401', async () => {
@@ -122,37 +121,29 @@ describe('session and settings calls', () => {
   })
 })
 
-describe('readSSE streaming', () => {
-  it('rejects with UnauthorizedError on 401', async () => {
-    fetchMock.mockResolvedValue(sse([], 401))
-    await expect(streamAll(() => {}, new AbortController().signal)).rejects.toBeInstanceOf(UnauthorizedError)
+describe('stream delegation to connectSSE', () => {
+  it('streamSession targets the session stream path and forwards opts', async () => {
+    const opts: StreamOpts<ServerEvent> = { onEvent: vi.fn(), signal: new AbortController().signal }
+    await streamSession('s1', opts)
+    expect(connectMock).toHaveBeenCalledTimes(1)
+    expect(connectMock).toHaveBeenCalledWith('/api/sessions/s1/stream', opts)
   })
 
-  it('rejects when the response is not ok', async () => {
-    fetchMock.mockResolvedValue(sse([], 503))
-    await expect(streamSession('s1', () => {}, new AbortController().signal)).rejects.toThrow('stream failed: 503')
+  it('streamAll targets the global stream path and forwards opts', async () => {
+    const opts: StreamOpts<GlobalEvent> = {
+      onEvent: vi.fn(),
+      onStatus: vi.fn(),
+      onReconnect: vi.fn(),
+      signal: new AbortController().signal,
+    }
+    await streamAll(opts)
+    expect(connectMock).toHaveBeenCalledTimes(1)
+    expect(connectMock).toHaveBeenCalledWith('/api/stream', opts)
   })
 
-  it('parses typed events and skips malformed or dataless frames', async () => {
-    const events: GlobalEvent[] = []
-    fetchMock.mockResolvedValue(
-      sse([
-        'data: {"type":"session_status","id":"a","status":"working"}\n\n',
-        ': comment-only frame\n\n',
-        'data: not-json\n\n',
-        'data: {"id":"no-type"}\n\n',
-      ]),
-    )
-    await streamAll((e) => events.push(e), new AbortController().signal)
-    expect(events).toEqual([{ type: 'session_status', id: 'a', status: 'working' }])
-  })
-
-  it('reassembles a frame split across chunks', async () => {
-    const events: GlobalEvent[] = []
-    fetchMock.mockResolvedValue(
-      sse(['data: {"type":"session_status",', '"id":"b","status":"closed"}\n\n']),
-    )
-    await streamAll((e) => events.push(e), new AbortController().signal)
-    expect(events).toEqual([{ type: 'session_status', id: 'b', status: 'closed' }])
+  it('propagates connectSSE rejection (e.g. UnauthorizedError)', async () => {
+    connectMock.mockRejectedValueOnce(new UnauthorizedError())
+    const opts: StreamOpts<GlobalEvent> = { onEvent: vi.fn(), signal: new AbortController().signal }
+    await expect(streamAll(opts)).rejects.toBeInstanceOf(UnauthorizedError)
   })
 })
