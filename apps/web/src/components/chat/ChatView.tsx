@@ -111,10 +111,7 @@ export function ChatView({
       </div>
 
       <div className="shrink-0 border-t border-border px-4 pb-3.5 pt-3 lg:px-6">
-        <div className="flex items-center justify-between gap-2">
-          <StatusLine usage={usage} />
-          <ConnectionPill connection={connection} />
-        </div>
+        <StatusLine usage={usage} trailing={<ConnectionPill connection={connection} />} />
         <Composer
           value={draft}
           onChange={onDraftChange}

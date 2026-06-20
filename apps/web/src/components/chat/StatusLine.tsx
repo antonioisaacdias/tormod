@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Cpu } from 'lucide-react'
 import { Meter } from '@/components/ui/Meter'
 import { formatTokens } from '@/lib/formatTokens'
@@ -28,9 +29,10 @@ function Metric({ label, percentage, detail, meterClassName = 'w-14' }: MetricPr
 
 interface StatusLineProps {
   usage: SessionUsage
+  trailing?: ReactNode
 }
 
-export function StatusLine({ usage }: StatusLineProps) {
+export function StatusLine({ usage, trailing }: StatusLineProps) {
   const { context, limits } = usage
   const contextPercentage = Math.round((context.usedTokens / context.totalTokens) * 100)
   const contextDetail = `${formatTokens(context.usedTokens)}/${formatTokens(context.totalTokens)}`
@@ -54,6 +56,7 @@ export function StatusLine({ usage }: StatusLineProps) {
           <Metric label="7d" percentage={limits.sevenDay} meterClassName="w-10" />
         </>
       )}
+      {trailing && <div className="ml-auto">{trailing}</div>}
     </div>
   )
 }
