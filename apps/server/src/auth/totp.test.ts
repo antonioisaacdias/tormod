@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateSync, verifySync } from "otplib";
+import { generateSync } from "otplib";
 import { generateSecret, otpauthUri, verifyTotp, qrDataUrl } from "./totp.js";
 
 describe("totp", () => {

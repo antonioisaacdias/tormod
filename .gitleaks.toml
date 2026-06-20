@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Planning and design docs contain illustrative example credentials, not real secrets"
+paths = ['''^docs/''']

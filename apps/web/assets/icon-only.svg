@@ -1,0 +1,26 @@
+<svg width="1024" height="1024" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="90%">
+      <stop offset="0" stop-color="#16293f"/><stop offset="1" stop-color="#0a1726"/>
+    </radialGradient>
+    <linearGradient id="lit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fdcfa"/><stop offset="1" stop-color="#62c2ec"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4ea9d6"/><stop offset="1" stop-color="#3289b8"/>
+    </linearGradient>
+    <linearGradient id="shd" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f6f96"/><stop offset="1" stop-color="#205073"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="url(#bg)"/>
+  <path d="M17 13 H44 Q46 13 46 15 V17.5 H15 V15 Q15 13 17 13 Z" fill="url(#lit)"/>
+  <path d="M15 17.5 H43 V24.5 Q43 25.5 42 25.5 H16 Q15 25.5 15 24.5 Z" fill="url(#mid)"/>
+  <path d="M43 17.5 H46 V23.5 Q46 25.5 44 25.5 H42 Q43 25.5 43 24.5 Z" fill="url(#shd)"/>
+  <path d="M25.5 25.5 H34 V48 H25.5 Z" fill="url(#mid)"/>
+  <path d="M34 25.5 H37.5 V48 H34 Z" fill="url(#shd)"/>
+  <path d="M20.5 48 H37.5 L38.1 50 H19.9 Z" fill="url(#lit)"/>
+  <path d="M19.9 50 H38.1 L39.1 54.7 Q39.35 55.8 38.1 55.8 H20.9 Q19.65 55.8 19.9 54.7 Z" fill="url(#mid)"/>
+  <path d="M37.5 48 H41 L42 54.7 Q42.25 55.8 41 55.8 H38.1 Q39.35 55.8 39.1 54.7 L38.1 50 Z" fill="url(#shd)"/>
+  <rect x="17.5" y="13.4" width="26" height="1.05" rx=".5" fill="#d8f4ff" opacity=".65"/>
+</svg>

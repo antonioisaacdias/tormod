@@ -14,7 +14,7 @@ export type BrainEvent =
 export type HistoryItem =
   | { role: "user"; text: string }
   | { role: "brain"; text: string }
-  | { role: "tool"; tool: string; input: Record<string, unknown> };
+  | { role: "tool"; tool: string; input: Record<string, unknown>; id?: string };
 
 /** Decision returned to the brain for a pending tool use. */
 export interface PermissionResponse {

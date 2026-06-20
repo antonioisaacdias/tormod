@@ -22,6 +22,7 @@ export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
   useEffect(() => {
     if (settings) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate the form fields once the settings finish loading
       setMaxLive(String(settings.maxLiveSessions))
       setIdleHours(String(settings.idleCloseHours))
       setPrompt(settings.systemPrompt)

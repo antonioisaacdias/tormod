@@ -5,9 +5,8 @@ import { UserStore } from "../auth/users.js";
 import { AuthSessionStore } from "../auth/authSessions.js";
 import { Throttle } from "../auth/throttle.js";
 import type { AuthContext } from "../auth/context.js";
+import type { Env } from "./app.js";
 import { generateSync } from "otplib";
-
-type Env = { Variables: { [CLIENT_IP]: string } };
 
 function build(ip = "192.168.0.10"): Hono<Env> {
   const ctx: AuthContext = {
@@ -181,5 +180,74 @@ describe("auth routes", () => {
       body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
     });
     expect(res.status).toBe(403);
+  });
+});
+
+describe("auth — session teardown and totp management", () => {
+  async function registered() {
+    const app = build();
+    const reg = await app.request("/api/auth/register", {
+      method: "POST", headers: J, body: JSON.stringify({ username: "odin", email: "o@x.dev", password: "hunter2hunter2" }),
+    });
+    return { app, cookie: cookieFrom(reg) };
+  }
+
+  it("logout revokes the session so the cookie stops working", async () => {
+    const { app, cookie } = await registered();
+    const h = { ...J, Cookie: cookie };
+    expect((await app.request("/api/protected", { headers: h })).status).toBe(200);
+
+    const out = await app.request("/api/auth/logout", { method: "POST", headers: h });
+    expect(out.status).toBe(200);
+    expect(await out.json()).toEqual({ ok: true });
+
+    expect((await app.request("/api/protected", { headers: h })).status).toBe(401);
+  });
+
+  it("/api/auth/me returns the profile", async () => {
+    const { app, cookie } = await registered();
+    const res = await app.request("/api/auth/me", { headers: { ...J, Cookie: cookie } });
+    expect(res.status).toBe(200);
+    expect((await res.json() as { username: string }).username).toBe("odin");
+  });
+
+  it("blocks totp enrollment from a non-local origin", async () => {
+    const { app, cookie } = await registered();
+    const res = await app.request("/api/auth/totp/enroll", {
+      method: "POST", headers: { ...J, Cookie: cookie, "x-test-ip": "203.0.113.9" },
+    });
+    expect(res.status).toBe(403);
+    expect((await res.json() as { error: string }).error).toContain("local-only");
+  });
+
+  it("rejects confirm with an invalid code", async () => {
+    const { app, cookie } = await registered();
+    const h = { ...J, Cookie: cookie };
+    await app.request("/api/auth/totp/enroll", { method: "POST", headers: h });
+    const res = await app.request("/api/auth/totp/confirm", {
+      method: "POST", headers: h, body: JSON.stringify({ token: "000000" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("disables totp with the right password and refuses a wrong one", async () => {
+    const { app, cookie } = await registered();
+    const h = { ...J, Cookie: cookie };
+    const enroll = await app.request("/api/auth/totp/enroll", { method: "POST", headers: h });
+    const { secret } = (await enroll.json()) as { secret: string };
+    await app.request("/api/auth/totp/confirm", {
+      method: "POST", headers: h, body: JSON.stringify({ token: generateSync({ secret }) }),
+    });
+
+    const wrong = await app.request("/api/auth/totp/disable", {
+      method: "POST", headers: h, body: JSON.stringify({ password: "nope" }),
+    });
+    expect(wrong.status).toBe(401);
+
+    const ok = await app.request("/api/auth/totp/disable", {
+      method: "POST", headers: h, body: JSON.stringify({ password: "hunter2hunter2" }),
+    });
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ ok: true });
   });
 });

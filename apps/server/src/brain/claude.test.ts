@@ -369,7 +369,7 @@ describe("ClaudeCodeAdapter", () => {
     expect(hist).toEqual([
       { role: "user", text: "que horas são?" },
       { role: "brain", text: "São 15h." },
-      { role: "tool", tool: "Read", input: { file_path: "/etc/hosts" } },
+      { role: "tool", tool: "Read", input: { file_path: "/etc/hosts" }, id: "t1" },
     ])
   });
 
