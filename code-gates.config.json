@@ -1,0 +1,10 @@
+{
+  "packages": ["apps/web", "apps/server"],
+  "coverage": true,
+  "sonar": {
+    "projectKey": "tormod",
+    "projectName": "Tormod",
+    "sources": ["apps/web/src", "apps/server/src"],
+    "exclusions": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"]
+  }
+}

@@ -1,6 +1,11 @@
+import { apiFetch, isNative, setToken, clearToken } from './platform'
 import type { AuthStatus, AuthProfile, TotpEnrollment } from './serverTypes'
 
 const MUT: HeadersInit = { 'Content-Type': 'application/json', 'X-Tormod': '1' }
+
+function authHeaders(): HeadersInit {
+  return isNative() ? { ...MUT, 'X-Tormod-Client': 'native' } : MUT
+}
 
 export class AuthError extends Error {
   readonly status: number
@@ -20,33 +25,40 @@ async function json<T>(res: Response): Promise<T> {
 }
 
 export async function getStatus(): Promise<AuthStatus> {
-  return json(await fetch('/api/auth/status', { credentials: 'include' }))
+  return json(await apiFetch('/api/auth/status'))
 }
 
 export async function register(body: { username: string; email: string; password: string }): Promise<void> {
-  await json(await fetch('/api/auth/register', { method: 'POST', headers: MUT, credentials: 'include', body: JSON.stringify(body) }))
+  const parsed = await json<{ token?: string }>(
+    await apiFetch('/api/auth/register', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }),
+  )
+  if (isNative() && parsed.token) setToken(parsed.token)
 }
 
 export async function login(body: { username: string; password: string; totp?: string }): Promise<void> {
-  await json(await fetch('/api/auth/login', { method: 'POST', headers: MUT, credentials: 'include', body: JSON.stringify(body) }))
+  const parsed = await json<{ token?: string }>(
+    await apiFetch('/api/auth/login', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }),
+  )
+  if (isNative() && parsed.token) setToken(parsed.token)
 }
 
 export async function logout(): Promise<void> {
-  await fetch('/api/auth/logout', { method: 'POST', headers: MUT, credentials: 'include' })
+  await apiFetch('/api/auth/logout', { method: 'POST', headers: MUT })
+  if (isNative()) clearToken()
 }
 
 export async function getProfile(): Promise<AuthProfile> {
-  return json(await fetch('/api/auth/me', { credentials: 'include' }))
+  return json(await apiFetch('/api/auth/me'))
 }
 
 export async function enrollTotp(): Promise<TotpEnrollment> {
-  return json(await fetch('/api/auth/totp/enroll', { method: 'POST', headers: MUT, credentials: 'include' }))
+  return json(await apiFetch('/api/auth/totp/enroll', { method: 'POST', headers: MUT }))
 }
 
 export async function confirmTotp(token: string): Promise<void> {
-  await json(await fetch('/api/auth/totp/confirm', { method: 'POST', headers: MUT, credentials: 'include', body: JSON.stringify({ token }) }))
+  await json(await apiFetch('/api/auth/totp/confirm', { method: 'POST', headers: MUT, body: JSON.stringify({ token }) }))
 }
 
 export async function disableTotp(password: string): Promise<void> {
-  await json(await fetch('/api/auth/totp/disable', { method: 'POST', headers: MUT, credentials: 'include', body: JSON.stringify({ password }) }))
+  await json(await apiFetch('/api/auth/totp/disable', { method: 'POST', headers: MUT, body: JSON.stringify({ password }) }))
 }

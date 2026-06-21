@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- ui primitives module re-exports Radix roots alongside the styled component */
 import type { ComponentProps } from 'react'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { cn } from '@/lib/cn'

@@ -1,4 +1,5 @@
-import type { Hono } from "hono";
+import type { Context, Hono } from "hono";
+import type { Env } from "./app.js";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import type { AuthContext } from "../auth/context.js";
 import { hashPassword, verifyPassword } from "../auth/password.js";
@@ -27,6 +28,16 @@ function clientIp(c: { get: (k: string) => unknown }): string {
   return (c.get(CLIENT_IP) as string) ?? "";
 }
 
+function bearerToken(c: { req: { header: (k: string) => string | undefined } }): string | undefined {
+  const h = c.req.header("Authorization");
+  if (!h || !h.startsWith("Bearer ")) return undefined;
+  return h.slice(7) || undefined;
+}
+
+function wantsToken(c: { req: { header: (k: string) => string | undefined } }): boolean {
+  return c.req.header("X-Tormod-Client") === "native";
+}
+
 function originIsLocal(c: { get: (k: string) => unknown }, ctx: AuthContext): boolean {
   return isLocal(clientIp(c), ctx.config.trustedCidrs);
 }
@@ -48,23 +59,24 @@ function requireCsrf(c: { req: { method: string; header: (k: string) => string |
 }
 
 export function sessionMiddleware(ctx: AuthContext) {
-  return async (c: any, next: () => Promise<void>) => {
-    const id = getCookie(c, COOKIE);
+  return async (c: Context<Env>, next: () => Promise<void>) => {
+    const id = bearerToken(c) ?? getCookie(c, COOKIE);
     if (!id || !ctx.sessions.validate(id)) return c.json({ error: "unauthorized" }, 401);
     await next();
   };
 }
 
-export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
+export function registerAuthRoutes(app: Hono<Env>, ctx: AuthContext): void {
   app.use("/api/auth/*", async (c, next) => {
     if (!requireCsrf(c)) return c.json({ error: "forbidden" }, 403);
     await next();
   });
 
-  const issue = (c: any) => {
+  const issue = (c: Context<Env>): string => {
     const ttlSec = ctx.config.sessionTtlDays * SECS_PER_DAY;
     const { id } = ctx.sessions.issue();
     setCookie(c, COOKIE, id, sessionCookieOpts(ctx, ttlSec));
+    return id;
   };
 
   app.get("/api/auth/status", (c) => {
@@ -85,8 +97,8 @@ export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
       email: input.email,
       passwordHash: await hashPassword(input.password),
     });
-    issue(c);
-    return c.json({ ok: true }, 201);
+    const id = issue(c);
+    return c.json(wantsToken(c) ? { ok: true, token: id } : { ok: true }, 201);
   });
 
   app.post("/api/auth/login", async (c) => {
@@ -121,8 +133,8 @@ export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
       return generic();
     }
     ctx.throttle.recordSuccess(username);
-    issue(c);
-    return c.json({ ok: true });
+    const id = issue(c);
+    return c.json(wantsToken(c) ? { ok: true, token: id } : { ok: true });
   });
 
   app.post("/api/auth/logout", sessionMiddleware(ctx), (c) => {
@@ -138,7 +150,7 @@ export function registerAuthRoutes(app: Hono<any>, ctx: AuthContext): void {
     return c.json(p);
   });
 
-  const localOnly = async (c: any, next: () => Promise<void>) => {
+  const localOnly = async (c: Context<Env>, next: () => Promise<void>) => {
     if (!originIsLocal(c, ctx)) return c.json({ error: "2fa management is local-only" }, 403);
     await next();
   };

@@ -343,7 +343,7 @@ function toHistory(m: SessionMessage): HistoryItem[] {
     const out: HistoryItem[] = [];
     for (const raw of content) {
       if (!raw || typeof raw !== "object") continue;
-      const block = raw as { type?: string; text?: unknown; name?: unknown; input?: unknown };
+      const block = raw as { type?: string; text?: unknown; name?: unknown; input?: unknown; id?: unknown };
       if (block.type === "text" && typeof block.text === "string") {
         out.push({ role: "brain", text: block.text });
       } else if (block.type === "tool_use" && typeof block.name === "string") {
@@ -351,6 +351,7 @@ function toHistory(m: SessionMessage): HistoryItem[] {
           role: "tool",
           tool: block.name,
           input: (block.input ?? {}) as Record<string, unknown>,
+          ...(typeof block.id === "string" ? { id: block.id } : {}),
         });
       }
     }

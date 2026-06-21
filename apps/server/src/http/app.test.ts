@@ -150,3 +150,82 @@ describe("createApp — static web", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("createApp — CORS for the native client", () => {
+  function corsApp() {
+    const settings = SettingsStore.open(":memory:");
+    const mgr = new SessionManager(new FakeBrainAdapter(), Audit.open(":memory:"), undefined, settings);
+    return createApp(mgr, { auth: ctx(), settings, corsOrigins: ["http://localhost"] });
+  }
+
+  it("allows the configured native origin on a preflight", async () => {
+    const res = await corsApp().request("/api/sessions", {
+      method: "OPTIONS",
+      headers: { Origin: "http://localhost", "Access-Control-Request-Method": "GET" },
+    });
+    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost");
+  });
+
+  it("does not allow a foreign origin", async () => {
+    const res = await corsApp().request("/api/sessions", {
+      method: "OPTIONS",
+      headers: { Origin: "http://evil.example", "Access-Control-Request-Method": "GET" },
+    });
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
+  });
+});
+
+describe("createApp — session lifecycle routes", () => {
+  async function withSession() {
+    const { app, headers } = await authedApp();
+    const created = await app.request("/api/sessions", { method: "POST", headers, body: "{}" });
+    const { id } = (await created.json()) as { id: string };
+    return { app, headers, id };
+  }
+
+  it("returns the session history", async () => {
+    const { app, headers, id } = await withSession();
+    const res = await app.request(`/api/sessions/${id}/history`, { headers });
+    expect(res.status).toBe(200);
+    expect(Array.isArray(await res.json())).toBe(true);
+  });
+
+  it("interrupts a session", async () => {
+    const { app, headers, id } = await withSession();
+    const res = await app.request(`/api/sessions/${id}/interrupt`, { method: "POST", headers });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ interrupted: true });
+  });
+
+  it("sets a valid permission mode and rejects an invalid one", async () => {
+    const { app, headers, id } = await withSession();
+    const ok = await app.request(`/api/sessions/${id}/permission-mode`, {
+      method: "PUT", headers, body: JSON.stringify({ mode: "auto" }),
+    });
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ mode: "auto" });
+
+    const bad = await app.request(`/api/sessions/${id}/permission-mode`, {
+      method: "PUT", headers, body: JSON.stringify({ mode: "bogus" }),
+    });
+    expect(bad.status).toBe(400);
+  });
+
+  it("closes and removes a session", async () => {
+    const { app, headers, id } = await withSession();
+    const closed = await app.request(`/api/sessions/${id}/close`, { method: "POST", headers });
+    expect(await closed.json()).toEqual({ closed: true });
+
+    const removed = await app.request(`/api/sessions/${id}`, { method: "DELETE", headers });
+    expect(await removed.json()).toEqual({ removed: true });
+  });
+
+  it("accepts a decision for a tool use", async () => {
+    const { app, headers } = await authedApp();
+    const res = await app.request("/api/decisions/tool-xyz", {
+      method: "POST", headers, body: JSON.stringify({ allow: true }),
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  });
+});

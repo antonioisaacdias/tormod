@@ -37,7 +37,12 @@ const auth = {
   config: authConfig,
 };
 
-const app = createApp(manager, { auth, settings, webDist: process.env.TORMOD_WEB_DIST });
+const corsOrigins = (process.env.TORMOD_CORS_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const app = createApp(manager, { auth, settings, webDist: process.env.TORMOD_WEB_DIST, corsOrigins });
 
 const host = process.env.HOST ?? "127.0.0.1";
 serve({ fetch: app.fetch, port, hostname: host }, (info) => {

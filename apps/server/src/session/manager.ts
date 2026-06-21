@@ -2,7 +2,7 @@ import type { BrainAdapter, BrainEvent, HistoryItem, PermissionResponse } from "
 import { classifyTool } from "../permission/policy.js";
 import { Audit } from "../audit/audit.js";
 import type { SessionStore, UsageSnapshot } from "./store.js";
-import type { GlobalEvent, ServerEvent, SessionActivity } from "./events.js";
+import type { GlobalEvent, ServerEvent } from "./events.js";
 import { DEFAULTS, type PermissionMode, type Settings, type SettingsStore } from "../settings/store.js";
 
 const MODEL_IDS: Record<"opus" | "sonnet" | "haiku", string> = {

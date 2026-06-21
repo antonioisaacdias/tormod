@@ -23,24 +23,29 @@ export function useSessions() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial load on mount; refresh sets state after the async fetch resolves
     void refresh()
   }, [refresh])
 
   // Live status from the global channel — keeps every sidebar card current.
   useEffect(() => {
     const ctrl = new AbortController()
-    void streamAll((event) => {
-      if (event.type !== 'session_status') return
-      setSessions((current) =>
-        current.map((s) =>
-          s.id === event.id ? { ...s, status: event.status, live: event.status !== 'closed' } : s,
-        ),
-      )
-    }, ctrl.signal).catch((err) => {
+    void streamAll({
+      onEvent: (event) => {
+        if (event.type !== 'session_status') return
+        setSessions((current) =>
+          current.map((s) =>
+            s.id === event.id ? { ...s, status: event.status, live: event.status !== 'closed' } : s,
+          ),
+        )
+      },
+      onReconnect: () => void refresh(),
+      signal: ctrl.signal,
+    }).catch((err) => {
       if (!ctrl.signal.aborted) console.error('streamAll', err)
     })
     return () => ctrl.abort()
-  }, [])
+  }, [refresh])
 
   const create = useCallback(async (): Promise<string | null> => {
     try {

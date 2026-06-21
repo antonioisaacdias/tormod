@@ -23,3 +23,21 @@ dist/
 # Build cache / stray logs
 .vite/
 *.log
+
+# Capacitor / Android nativo
+apps/web/android/app/build/
+apps/web/android/build/
+apps/web/android/.gradle/
+apps/web/android/.idea/
+apps/web/android/local.properties
+apps/web/android/app/release/
+apps/web/android/keystore.properties
+apps/web/**/*.keystore
+apps/web/**/*.jks
+
+# Brainstorm visual companion (mockups locais)
+.superpowers/
+
+# Quality gates (code-gates) — cobertura e artefatos de scan
+coverage/
+.scannerwork/

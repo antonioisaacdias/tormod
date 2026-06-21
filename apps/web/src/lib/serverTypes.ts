@@ -52,7 +52,7 @@ export type ServerEvent =
 export type HistoryItem =
   | { role: 'user'; text: string }
   | { role: 'brain'; text: string }
-  | { role: 'tool'; tool: string; input: Record<string, unknown> }
+  | { role: 'tool'; tool: string; input: Record<string, unknown>; id?: string }
 
 export interface Settings {
   maxLiveSessions: number

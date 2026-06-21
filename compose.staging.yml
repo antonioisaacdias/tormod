@@ -13,6 +13,7 @@ services:
       TORMOD_COOKIE_SECURE: "false"
       TORMOD_AUDIT: /data/tormod.db
       TORMOD_TRUSTED_CIDRS: "172.16.0.0/12,192.168.0.0/24,10.0.0.0/24,127.0.0.1/32,::1/128"
+      TORMOD_CORS_ORIGINS: "http://localhost"
       HOST: 0.0.0.0
     volumes:
       - /home/odin/.ssh:/home/odin/.ssh:ro

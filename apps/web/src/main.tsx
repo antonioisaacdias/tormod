@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/roboto'
 import '@fontsource-variable/roboto-mono'
 import './index.css'
-import { App } from '@/app/App'
+import { AppRoot } from '@/app/AppRoot'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppRoot />
   </StrictMode>,
 )

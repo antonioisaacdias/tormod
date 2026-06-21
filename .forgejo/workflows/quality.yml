@@ -1,0 +1,18 @@
+name: quality
+on: [push, pull_request]
+
+jobs:
+  gate:
+    runs-on: host
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: code-gates
+        run: |
+          docker run --rm --network host \
+            -e SONAR_HOST_URL="${{ secrets.SONAR_HOST_URL }}" \
+            -e SONAR_TOKEN="${{ secrets.SONAR_TOKEN }}" \
+            -v "${{ github.workspace }}":/w -w /w \
+            --entrypoint sh \
+            code-gates:latest \
+            -c 'npm --prefix apps/web ci && npm --prefix apps/server ci && code-gates all .'

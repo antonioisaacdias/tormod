@@ -131,3 +131,43 @@ describe('foldEvents — seedThread (history)', () => {
     expect(work.kind === 'work' && work.entries).toHaveLength(2)
   })
 })
+
+describe('foldEvents — reconnect idempotency', () => {
+  it('folding the same permission_request twice yields exactly one card', () => {
+    const req: ServerEvent = {
+      type: 'permission_request',
+      toolUseId: 't1',
+      request: { tool: 'Write', input: { file_path: '/x' } },
+      tier: 'approve',
+    }
+    const state = fold([req, req]) // server replays the pending request on reconnect
+    const approvals = state.items.filter((i) => i.kind === 'approval')
+    expect(approvals).toHaveLength(1)
+    expect(approvals[0].id).toBe('t1')
+  })
+
+  it('replaying permission_request after a history reseed does not duplicate the tool', () => {
+    // On reconnect we reseed durable history (which carries the pending tool_use,
+    // id and all) then the server replays the permission_request for that same id.
+    const seeded = seedThread([
+      { role: 'user', text: 'crie /x' },
+      { role: 'tool', tool: 'Write', input: { file_path: '/x', content: 'hi' }, id: 'tool-real' },
+    ])
+    const after = foldEvent(seeded, {
+      type: 'permission_request',
+      toolUseId: 'tool-real',
+      request: { tool: 'Write', input: { file_path: '/x', content: 'hi' } },
+      tier: 'approve',
+    })
+
+    const approvals = after.items.filter((i) => i.kind === 'approval')
+    expect(approvals).toHaveLength(1)
+    expect(approvals[0].id).toBe('tool-real')
+
+    // The seeded tool entry must not linger inside any work balloon.
+    const leaked = after.items
+      .filter((i) => i.kind === 'work')
+      .some((w) => w.kind === 'work' && w.entries.some((e) => e.type === 'tool' && e.id === 'tool-real'))
+    expect(leaked).toBe(false)
+  })
+})

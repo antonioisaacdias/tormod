@@ -10,6 +10,8 @@ import { StatusDot } from '@/components/ui/StatusDot'
 import { Thread } from './Thread'
 import { Composer } from './Composer'
 import { StatusLine } from './StatusLine'
+import { ConnectionPill } from './ConnectionPill'
+import type { ConnectionStatus } from '@/lib/api'
 import type { Session } from '@/types/session'
 import type { SessionUsage } from '@/types/usage'
 import type { ApprovalDecision, ThreadItem } from '@/types/thread'
@@ -20,6 +22,7 @@ interface ChatViewProps {
   usage: SessionUsage
   decisions: Record<string, ApprovalDecision>
   working: boolean
+  connection: ConnectionStatus
   draft: string
   onDraftChange: (value: string) => void
   onSend: (text: string) => void
@@ -35,6 +38,7 @@ export function ChatView({
   usage,
   decisions,
   working,
+  connection,
   draft,
   onDraftChange,
   onSend,
@@ -107,7 +111,7 @@ export function ChatView({
       </div>
 
       <div className="shrink-0 border-t border-border px-4 pb-3.5 pt-3 lg:px-6">
-        <StatusLine usage={usage} />
+        <StatusLine usage={usage} trailing={<ConnectionPill connection={connection} />} />
         <Composer
           value={draft}
           onChange={onDraftChange}
