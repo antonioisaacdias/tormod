@@ -91,7 +91,7 @@ export function App() {
     <div className="flex h-full bg-ink text-frost">
       <aside
         className={cn(
-          'flex-col gap-4 border-r border-border bg-deep p-3.5 lg:flex lg:w-72',
+          'flex-col gap-4 border-r border-border bg-deep px-3.5 pt-[calc(0.875rem_+_env(safe-area-inset-top))] pb-[calc(0.875rem_+_env(safe-area-inset-bottom))] lg:flex lg:w-72',
           mobileChat ? 'hidden' : 'flex w-full',
         )}
       >

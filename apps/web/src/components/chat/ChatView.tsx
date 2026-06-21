@@ -71,7 +71,7 @@ export function ChatView({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
-      <header className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3.5 lg:px-6">
+      <header className="flex shrink-0 items-center gap-2 border-b border-border px-4 pb-3.5 pt-[calc(0.875rem_+_env(safe-area-inset-top))] lg:px-6">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="lg:hidden">
           <ChevronLeft className="size-5" />
         </Button>
@@ -110,7 +110,7 @@ export function ChatView({
         <Thread items={items} decisions={decisions} working={working} onDecide={onDecide} />
       </div>
 
-      <div className="shrink-0 border-t border-border px-4 pb-3.5 pt-3 lg:px-6">
+      <div className="shrink-0 border-t border-border px-4 pb-[calc(0.875rem_+_env(safe-area-inset-bottom))] pt-3 lg:px-6">
         <StatusLine usage={usage} trailing={<ConnectionPill connection={connection} />} />
         <Composer
           value={draft}
